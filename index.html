@@ -1,0 +1,120 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Draw Something</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/main.css">
+    <script src="js/vendor/underscore.js"></script>
+    <script src="js/vendor/kinetic-v4.0.4.js"></script>
+    <script src="js/main.js"></script>
+</head>
+<body>
+<script type="text/template" id="Js_header_tpl">
+<h1>Draw Something</h1>
+<h2>Hello: <%= name %></h2>
+</script>
+<header id="Js_header"></header>
+<div id="Js_canvas" class="canvas"></div>
+<div class="tools">
+    <table id="Js_palette" class="palette">
+        <tbody>
+        <tr>
+            <td data-color="#000" style="background-color: #000"></td>
+            <td data-color="#008" style="background-color: #008"></td>
+            <td data-color="#00f" style="background-color: #00f"></td>
+            <td data-color="#080" style="background-color: #080"></td>
+            <td data-color="#088" style="background-color: #088"></td>
+            <td data-color="#0f0" style="background-color: #0f0"></td>
+            <td data-color="#0f8" style="background-color: #0f8"></td>
+            <td data-color="#0ff" style="background-color: #0ff"></td>
+        </tr>
+        <tr>
+            <td data-color="#f00" style="background-color: #f00"></td>
+            <td data-color="#f08" style="background-color: #f08"></td>
+            <td data-color="#f0f" style="background-color: #f0f"></td>
+            <td data-color="#f80" style="background-color: #f80"></td>
+            <td data-color="#f88" style="background-color: #f88"></td>
+            <td data-color="#ff0" style="background-color: #ff0"></td>
+            <td data-color="#ff8" style="background-color: #ff8"></td>
+            <td data-color="#fff" style="background-color: #fff"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<script>
+var userInfo = {};
+userInfo.name = prompt("你妈贵姓");
+Draw.render("Js_header", userInfo);
+</script>
+<script>
+    stage = new Kinetic.Stage({
+        container: "Js_canvas",
+        width: 960,
+        height: 400
+    });
+    layer = new Kinetic.Layer();
+
+    background = new Kinetic.Rect({
+        x: 0,
+        y: 0,
+        width: stage.getWidth(),
+        height: stage.getHeight(),
+        fill: "white"
+    });
+
+    line = new Kinetic.Line({
+        points: [0, 0, 0, 0]
+    });
+
+    layer.add(background);
+    layer.add(line);
+    stage.add(layer);
+
+    moving = false
+    var pos = [];
+    var color = "#000";
+
+    _.each(document.getElementById("Js_palette").getElementsByTagName("td"), function(obj){
+        obj.addEventListener("click", function(){
+            color = this.dataset.color;
+        }, false);
+    })
+
+    stage.on("mousedown", function(){
+        if (moving){
+            moving = false;
+            layer.draw();
+        } else {
+            var mousePos = stage.getMousePosition();
+            line = new Kinetic.Line({
+                points: [0, 0, 0, 0],
+                stroke: color
+            });
+            layer.add(line);
+            //start point and end point are the same
+            line.setPoints([mousePos.x, mousePos.y, mousePos.x, mousePos.y]);
+            moving = true;
+            //layer.drawScene();
+        }
+
+    });
+
+    stage.on("mousemove", function(evt){
+        if (moving) {
+            var mousePos = stage.getMousePosition();
+            pos.push(mousePos.x);
+            pos.push(mousePos.y);
+            line.setPoints(pos);
+            moving = true;
+            layer.drawScene();
+        }
+    });
+
+    stage.on("mouseup", function(){
+        moving = false;
+        pos = [];
+    });
+</script>
+</body>
+</html>
