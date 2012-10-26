@@ -6,3 +6,5 @@ header { border-bottom: 1px solid #000;}
 
 .palette { border: 1px solid #000;}
 .palette td { width: 16px; height: 16px; border: 1px solid #000; cursor: pointer;}
+
+.shape {}
