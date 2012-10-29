@@ -8,3 +8,8 @@ header { border-bottom: 1px solid #000;}
 .palette td { width: 16px; height: 16px; border: 1px solid #000; cursor: pointer;}
 
 .shape {}
+
+.color {}
+.color div { width: 23px; height: 23px; border: 1px solid #000;}
+.color .foreground { background-color: #000;}
+.color .background { background-color: #FFF;}
