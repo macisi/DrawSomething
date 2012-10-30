@@ -2,10 +2,11 @@ header { border-bottom: 1px solid #000;}
 
 .canvas { margin: 0 auto; width: 960px; height: 480px; border-bottom: 1px solid #000;}
 
-.tools { margin: 0 auto; width: 960px; height: 120px; border-bottom: 1px solid #000;}
+.tools { margin: 0 auto; width: 960px; border-bottom: 1px solid #000;}
 
-.palette { border: 1px solid #000;}
-.palette td { width: 16px; height: 16px; border: 1px solid #000; cursor: pointer;}
+/*.palette { border: 1px solid #000;}*/
+/*.palette td { width: 16px; height: 16px; border: 1px solid #000; cursor: pointer;}*/
+.palette { width: 480px; height: 320px; border: 1px solid #000;}
 
 .shape {}
 

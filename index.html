@@ -18,34 +18,14 @@
 <header id="Js_header"></header>
 <div id="Js_canvas" class="canvas"></div>
 <div class="tools">
-    <table id="Js_palette" class="palette">
-        <tbody>
-        <tr>
-            <td data-color="#000" style="background-color: #000"></td>
-            <td data-color="#008" style="background-color: #008"></td>
-            <td data-color="#00f" style="background-color: #00f"></td>
-            <td data-color="#080" style="background-color: #080"></td>
-            <td data-color="#088" style="background-color: #088"></td>
-            <td data-color="#0f0" style="background-color: #0f0"></td>
-            <td data-color="#0f8" style="background-color: #0f8"></td>
-            <td data-color="#0ff" style="background-color: #0ff"></td>
-        </tr>
-        <tr>
-            <td data-color="#f00" style="background-color: #f00"></td>
-            <td data-color="#f08" style="background-color: #f08"></td>
-            <td data-color="#f0f" style="background-color: #f0f"></td>
-            <td data-color="#f80" style="background-color: #f80"></td>
-            <td data-color="#f88" style="background-color: #f88"></td>
-            <td data-color="#ff0" style="background-color: #ff0"></td>
-            <td data-color="#ff8" style="background-color: #ff8"></td>
-            <td data-color="#fff" style="background-color: #fff"></td>
-        </tr>
-        </tbody>
-    </table>
+    <div id="Js_palette" class="palette">
+
+    </div>
     <ul id="Js_shape" class="shape">
         <li><a data-shape="line">Line</a></li>
         <li><a data-shape="rect">Rect</a></li>
         <li><a data-shape="circle">Circle</a></li>
+        <li><a data-shape="eraser">Eraser</a></li>
     </ul>
     <div id="Js_color" class="color">
         <div class="foreground"></div>
@@ -57,9 +37,9 @@
 <script>
 //页面模版处理
 var userInfo = {};
-userInfo.name = prompt("你妈贵姓");
+//userInfo.name = prompt("你妈贵姓");
 Draw.render("Js_header", userInfo);
-Draw.start();
+Draw.init();
 </script>
 </body>
 </html>
