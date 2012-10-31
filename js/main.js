@@ -18,23 +18,37 @@ var Draw = Draw || {};
         circle,
         colorStatus = doc.getElementById("Js_color"),
         foreColor = colorStatus.querySelector(".foreground"),
-        backColor = colorStatus.querySelector(".background");
+        backColor = colorStatus.querySelector(".background"),
+        storage = window.localStorage,
+        stage,
+        layer;
 
-    var stage = new Kinetic.Stage({
-        container: "Js_canvas",
-        width: 960,
-        height: 400
-    });
-    var layer = new Kinetic.Layer();
-    var background = new Kinetic.Rect({
-        x: 0,
-        y: 0,
-        width: stage.getWidth(),
-        height: stage.getHeight(),
-        fill: "white"
-    });
-    layer.add(background);
-    stage.add(layer);
+    var drawData = storage.getItem("drawData");
+    //获取localStorage数据
+
+    if (drawData) {
+        stage = Kinetic.Node.create(drawData, "Js_canvas");
+        layer = stage.children[0];
+    } else {
+        stage = new Kinetic.Stage({
+            container: "Js_canvas",
+            width: 960,
+            height: 400
+        });
+        layer = new Kinetic.Layer();
+        var background = new Kinetic.Rect({
+            x: 0,
+            y: 0,
+            width: stage.getWidth(),
+            height: stage.getHeight(),
+            fill: "white"
+        });
+        group = new Kinetic.Group();
+        layer.add(background);
+        stage.add(layer);
+    }
+    console.log(layer);
+
 
     doc.getElementById("Js_shape").addEventListener("click", function(evt){
         var shape = evt.target.dataset.shape;
@@ -52,9 +66,19 @@ var Draw = Draw || {};
     doc.getElementById("Js_strokeWidth").addEventListener("change", function(){
         prop.width = this.value;
     }, false);
+    doc.getElementById("Js_cleanData").addEventListener("click", function(){
+        storage.removeItem("drawData");
+    }, false);
+    doc.getElementById("Js_cleanCanvas").addEventListener("click", function(){
+        layer.get(".user").each(function(){
+            this.remove();
+        });
+        layer.drawScene();
+    }, false);
 
     Draw.init = function(){
         var moving = false,
+            jsonData,
             pos = [];
 
         stage.on("mousedown", function(){
@@ -70,11 +94,12 @@ var Draw = Draw || {};
                         line = new Kinetic.Line({
                             points: [mousePos.x, mousePos.y, mousePos.x, mousePos.y],
                             stroke: prop.color,
-                            strokeWidth: prop.width
+                            strokeWidth: prop.width,
+                            name: "user"
                         });
+
                         layer.add(line);
                         moving = true;
-                        //layer.drawScene();
                         break;
                     case "rect":
                         rect = new Kinetic.Rect({
@@ -82,7 +107,8 @@ var Draw = Draw || {};
                             y: mousePos.y,
                             stroke: prop.color,
                             strokeWidth: prop.width,
-                            fill: prop.fill
+                            fill: prop.fill,
+                            name: "user"
                         });
                         pos.push(mousePos.x);
                         pos.push(mousePos.y);
@@ -95,7 +121,8 @@ var Draw = Draw || {};
                             y: mousePos.y,
                             stroke: prop.color,
                             strokeWidth: prop.width,
-                            fill: prop.fill
+                            fill: prop.fill,
+                            name: "user"
                         });
                         pos.push(mousePos.x);
                         pos.push(mousePos.y);
@@ -132,6 +159,9 @@ var Draw = Draw || {};
         stage.on("mouseup", function(){
             moving = false;
             pos = [];
+            jsonData = stage.toJSON();
+            storage.setItem("drawData", jsonData);
+            //把当前数据储存到localStorage
         });
     };
 
