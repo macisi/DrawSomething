@@ -1,10 +1,4 @@
-var Draw = Draw || {};
-(function(doc){
-    Draw.render = function(id, data){
-        var tpl = doc.getElementById(id + "_tpl").innerHTML,
-            wrap = doc.getElementById(id);
-        wrap.innerHTML = _.template(tpl, data);
-    };
+var Draw = (function(doc){
 
     var prop = {
             color: "#000",
@@ -13,42 +7,43 @@ var Draw = Draw || {};
             fill: "#fff",
             lock: false
         },
+        //默认属性
         line,
         rect,
         circle,
+        stage,
+        layer,
+        background,
+
         colorStatus = doc.getElementById("Js_color"),
         foreColor = colorStatus.querySelector(".foreground"),
         backColor = colorStatus.querySelector(".background"),
-        storage = window.localStorage,
-        stage,
-        layer;
 
-    var drawData = storage.getItem("drawData");
-    //获取localStorage数据
+        storage = window.localStorage;
 
-    if (drawData) {
-        stage = Kinetic.Node.create(drawData, "Js_canvas");
-        layer = stage.children[0];
-    } else {
-        stage = new Kinetic.Stage({
-            container: "Js_canvas",
-            width: 960,
-            height: 400
-        });
-        layer = new Kinetic.Layer();
-        var background = new Kinetic.Rect({
-            x: 0,
-            y: 0,
-            width: stage.getWidth(),
-            height: stage.getHeight(),
-            fill: "white"
-        });
-        group = new Kinetic.Group();
-        layer.add(background);
-        stage.add(layer);
+    function makeSence(data){
+        if (data) {
+            stage = Kinetic.Node.create(data, "Js_canvas");
+            layer = stage.children[0];
+        } else {
+            stage = new Kinetic.Stage({
+                container: "Js_canvas",
+                width: 960,
+                height: 400
+            });
+            layer = new Kinetic.Layer();
+            layer1 = new Kinetic.Layer();
+            background = new Kinetic.Rect({
+                x: 0,
+                y: 0,
+                width: stage.getWidth(),
+                height: stage.getHeight(),
+                fill: "white"
+            });
+            layer.add(background);
+            stage.add(layer);
+        }
     }
-    console.log(layer);
-
 
     doc.getElementById("Js_shape").addEventListener("click", function(evt){
         var shape = evt.target.dataset.shape;
@@ -76,95 +71,6 @@ var Draw = Draw || {};
         layer.drawScene();
     }, false);
 
-    Draw.init = function(){
-        var moving = false,
-            jsonData,
-            pos = [];
-
-        stage.on("mousedown", function(){
-            if (moving){
-                moving = false;
-                layer.draw();
-            } else {
-                var mousePos = stage.getMousePosition();
-                switch(prop.shape) {
-                    case "line":
-                    default :
-                        prop.color = prop.lock ? "#fff": prop.color;
-                        line = new Kinetic.Line({
-                            points: [mousePos.x, mousePos.y, mousePos.x, mousePos.y],
-                            stroke: prop.color,
-                            strokeWidth: prop.width,
-                            name: "user"
-                        });
-
-                        layer.add(line);
-                        moving = true;
-                        break;
-                    case "rect":
-                        rect = new Kinetic.Rect({
-                            x: mousePos.x,
-                            y: mousePos.y,
-                            stroke: prop.color,
-                            strokeWidth: prop.width,
-                            fill: prop.fill,
-                            name: "user"
-                        });
-                        pos.push(mousePos.x);
-                        pos.push(mousePos.y);
-                        layer.add(rect);
-                        moving = true;
-                        break;
-                    case "circle":
-                        circle = new Kinetic.Circle({
-                            x: mousePos.x,
-                            y: mousePos.y,
-                            stroke: prop.color,
-                            strokeWidth: prop.width,
-                            fill: prop.fill,
-                            name: "user"
-                        });
-                        pos.push(mousePos.x);
-                        pos.push(mousePos.y);
-                        layer.add(circle);
-                        moving = true;
-                        break;
-                }
-            }
-        });
-
-        stage.on("mousemove", function(){
-            if (moving) {
-                var mousePos = stage.getMousePosition();
-                switch(prop.shape) {
-                    case "line":
-                    default :
-                        pos.push(mousePos.x);
-                        pos.push(mousePos.y);
-                        line.setPoints(pos);
-                        break;
-                    case "rect":
-                        rect.setSize([mousePos.x - pos[0], mousePos.y - pos[1]]);
-                        break;
-                    case "circle":
-                        var radius = Math.sqrt(Math.pow(mousePos.x - pos[0], 2) + Math.pow(mousePos.y - pos[1], 2));
-                        circle.setRadius(radius);
-                        break;
-                }
-                layer.drawScene();
-                moving = true;
-            }
-        });
-
-        stage.on("mouseup", function(){
-            moving = false;
-            pos = [];
-            jsonData = stage.toJSON();
-            storage.setItem("drawData", jsonData);
-            //把当前数据储存到localStorage
-        });
-    };
-
     var palette = (function(){
         var color,
             isIn = false;
@@ -182,14 +88,8 @@ var Draw = Draw || {};
             height: 256,
             stroke: "#000",
             fill: {
-                start: {
-                    x: 0,
-                    y: 2
-                },
-                end: {
-                    x: 0,
-                    y: 254
-                },
+                start: { x:0, y:2 },
+                end: { x:0, y:254 },
                 colorStops: [0, '#f00', 1/6, "#f0f", 1/3, '#00f', 1/2, '#0ff', 2/3, '#0f0', 5/6, '#ff0', 1, '#f00']
             }
         });
@@ -200,14 +100,8 @@ var Draw = Draw || {};
             height: 256,
             stroke: "#000",
             fill: {
-                start: {
-                    x: 0,
-                    y: 2
-                },
-                end: {
-                    x: 0,
-                    y: 254
-                },
+                start: { x:0, y:2 },
+                end: { x:0, y:254 },
                 colorStops: [0, 'rgba(0, 0, 0, 0)', 1, 'rgba(0, 0, 0, 1)']
             }
         });
@@ -218,14 +112,8 @@ var Draw = Draw || {};
             height: 256,
             stroke: "#000",
             fill: {
-                start: {
-                    x: 2,
-                    y: 0
-                },
-                end: {
-                    x: 254,
-                    y: 0
-                },
+                start:{ x:2, y:0 },
+                end: { x:254, y:0 },
                 colorStops: [0, 'rgba(255, 255, 255, 1)', 1, 'rgba(255, 255, 255, 0)']
             }
         });
@@ -260,7 +148,6 @@ var Draw = Draw || {};
 
         maskLayer.on("mousedown", function(evt){
             color = getColor.call(this, paletteStage.getMousePosition());
-            console.log(color);
             if (evt.button === 0) {
                 prop.color = color;
                 foreColor.style.backgroundColor = color;
@@ -278,7 +165,115 @@ var Draw = Draw || {};
             return "rgb(" + data + ")";
         }
     })();
-    return Draw;
+
+    return {
+        render: function(id, data){
+            var tpl = doc.getElementById(id + "_tpl").innerHTML,
+                wrap = doc.getElementById(id);
+            wrap.innerHTML = _.template(tpl, data);
+        },
+
+        init: function(){
+            var moving = false,
+                jsonData,
+                mousePos,
+                pos = [];
+
+            makeSence(storage.getItem("drawData"));
+
+            doc.addEventListener("mousedown", function(){
+                mousePos = stage.getMousePosition();
+                if(mousePos) {
+                    if (moving){
+                        moving = false;
+                        layer.draw();
+                    } else {
+                        switch(prop.shape) {
+                            case "line":
+                            default :
+                                prop.color = prop.lock ? "#fff": prop.color;
+                                line = new Kinetic.Line({
+                                    points: [mousePos.x, mousePos.y, mousePos.x, mousePos.y],
+                                    stroke: prop.color,
+                                    strokeWidth: prop.width,
+                                    name: "user"
+                                });
+
+                                layer.add(line);
+                                moving = true;
+                                break;
+                            case "rect":
+                                rect = new Kinetic.Rect({
+                                    x: mousePos.x,
+                                    y: mousePos.y,
+                                    stroke: prop.color,
+                                    strokeWidth: prop.width,
+                                    fill: prop.fill,
+                                    name: "user"
+                                });
+                                pos.push(mousePos.x);
+                                pos.push(mousePos.y);
+                                layer.add(rect);
+                                moving = true;
+                                break;
+                            case "circle":
+                                circle = new Kinetic.Circle({
+                                    x: mousePos.x,
+                                    y: mousePos.y,
+                                    stroke: prop.color,
+                                    strokeWidth: prop.width,
+                                    fill: prop.fill,
+                                    name: "user"
+                                });
+                                pos.push(mousePos.x);
+                                pos.push(mousePos.y);
+                                layer.add(circle);
+                                moving = true;
+                                break;
+                        }
+                    }
+                }
+            }, false);
+
+            doc.addEventListener("mousemove", function(){
+                mousePos = stage.getMousePosition();
+                if (mousePos && moving) {
+                    console.time("move");
+                    mousePos = {
+                        x: (0.5 + stage.getMousePosition().x) | 0,
+                        y: (0.5 + stage.getMousePosition().y) | 0 //Math.round hack
+                    };
+                    switch(prop.shape) {
+                        case "line":
+                        default :
+                            pos.push(mousePos.x);
+                            pos.push(mousePos.y);
+                            line.setPoints(pos);
+                            break;
+                        case "rect":
+                            rect.setSize([mousePos.x - pos[0], mousePos.y - pos[1]]);
+                            break;
+                        case "circle":
+                            var radius = Math.sqrt(Math.pow(mousePos.x - pos[0], 2) + Math.pow(mousePos.y - pos[1], 2));
+                            circle.setRadius(radius);
+                            break;
+                    }
+                    layer.drawScene();
+                    moving = true;
+                    console.timeEnd("move");
+                }
+            }, false);
+
+            doc.addEventListener("mouseup", function(){
+                moving = false;
+                pos = [];
+                jsonData = stage.toJSON();
+                storage.setItem("drawData", jsonData);
+                //把当前数据储存到localStorage
+            }, false);
+        }
+    }
+
 })(document);
 
 

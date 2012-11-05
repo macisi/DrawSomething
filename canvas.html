@@ -1,0 +1,76 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title>learn canvas</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <style>
+    canvas { border: 1px solid #000;}
+    </style>
+</head>
+<body>
+<canvas id="Js_canvas"></canvas>
+<script>
+var canvas = document.getElementById("Js_canvas");
+var ctx = canvas.getContext("2d");
+var stageWidth = canvas.width = window.innerWidth - 30;
+var stageHeight = canvas.height = window.innerHeight - 30;
+
+function getMousePos(canvas, evt){
+    var rect = canvas.getBoundingClientRect();
+    var mouseX = evt.clientX - rect.left;
+    var mouseY = evt.clientY - rect.top;
+    return {
+        x: mouseX,
+        y: mouseY
+    };
+}
+window.requestAnimFrame = (function(callback) {
+    return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback) {
+        window.setTimeout(callback, 1000 / 60);
+    };
+})();
+
+var pos;
+function Ball(){
+    this.radius = 10;
+    this.x = stageWidth / 2;
+    this.y = this.radius;
+    this.center = {x: stageWidth/2, y: stageHeight/2};
+    this.distance = {x: this.center.x - this.x, y: this.center.y - this.y};
+    this.acceleration = constant * this.distance.x / Math.pow(Math.pow(this.distance.x, 2) + Math.pow(this.distance.y, 2), 2);
+    this.velocity = {x: 0, y: 0};
+
+    this.draw = function(){
+        ctx.fillStyle = "#000";
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        ctx.closePath();
+        ctx.fill();
+    }
+}
+var ball = new Ball();
+var constant = 6.67e-11;
+var gravity = 0.98;
+var bounce_factor = 1;
+var height = stageHeight - ball.radius;
+canvas.addEventListener("mousedown", function(evt){
+    pos = getMousePos(canvas, evt);
+}, false);
+function anim(){
+    velocity = velocity + gravity;
+    height = height - velocity > ball.radius ? height - velocity : ball.radius;
+    if (height <= ball.radius) {
+        velocity = velocity * bounce_factor * -1;
+    }
+    ball.y = stageHeight - height;
+    ctx.clearRect(0, 0, stageWidth, stageHeight);
+    ball.draw();
+    requestAnimFrame(function() {
+        anim();
+    });
+}
+anim();
+</script>
+</body>
+</html>
