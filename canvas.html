@@ -31,15 +31,28 @@ window.requestAnimFrame = (function(callback) {
     };
 })();
 
-var pos;
+var constant = 1e-3; //弹性系数
+var damping = 0.001; //阻尼
+var bounce_factor = 1;
+var mouseField = 1e-3;
+var mousePos = {
+    x: 0,
+    y: 0
+};
+var mouseIn = 0;
 function Ball(){
+    var dist;
     this.radius = 10;
     this.x = stageWidth / 2;
     this.y = this.radius;
     this.center = {x: stageWidth/2, y: stageHeight/2};
     this.distance = {x: this.center.x - this.x, y: this.center.y - this.y};
-    this.acceleration = constant * this.distance.x / Math.pow(Math.pow(this.distance.x, 2) + Math.pow(this.distance.y, 2), 2);
     this.velocity = {x: 0, y: 0};
+
+    this.getAcceleration = function(){
+        dist = Math.sqrt(Math.pow(this.distance.x, 2) + Math.pow(this.distance.y, 2));
+        return {x: constant * this.distance.x - damping * this.velocity.x + (mousePos.x - this.x) * mouseField * mouseIn, y: constant * this.distance.y - damping * this.velocity.y + (mousePos.y - this.y) * mouseField * mouseIn}
+    };
 
     this.draw = function(){
         ctx.fillStyle = "#000";
@@ -47,23 +60,22 @@ function Ball(){
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
         ctx.closePath();
         ctx.fill();
-    }
+    };
 }
 var ball = new Ball();
-var constant = 6.67e-11;
-var gravity = 0.98;
-var bounce_factor = 1;
-var height = stageHeight - ball.radius;
-canvas.addEventListener("mousedown", function(evt){
-    pos = getMousePos(canvas, evt);
+
+canvas.addEventListener("mousemove", function(evt){
+    mousePos = getMousePos(canvas, evt);
+//    console.log(mousePos);
+}, false);
+canvas.addEventListener("mouseover", function(evt){
+    mouseIn = 1;
+}, false);
+canvas.addEventListener("mouseout", function(evt){
+    mouseIn = 0;
 }, false);
 function anim(){
-    velocity = velocity + gravity;
-    height = height - velocity > ball.radius ? height - velocity : ball.radius;
-    if (height <= ball.radius) {
-        velocity = velocity * bounce_factor * -1;
-    }
-    ball.y = stageHeight - height;
+    calculate(ball);
     ctx.clearRect(0, 0, stageWidth, stageHeight);
     ball.draw();
     requestAnimFrame(function() {
@@ -71,6 +83,24 @@ function anim(){
     });
 }
 anim();
+function calculate(obj){
+    obj.velocity = {
+        x: obj.velocity.x + obj.getAcceleration().x,
+        y: obj.velocity.y + obj.getAcceleration().y
+    };
+    obj.distance = {
+        x: obj.distance.x - obj.velocity.x,
+        y: obj.distance.y - obj.velocity.y
+    };
+    obj.x = obj.distance.x + obj.center.x;
+    obj.y = obj.distance.y + obj.center.y;
+    if (obj.x <= obj.radius || obj.x >= stageWidth - obj.radius) {
+        obj.velocity.x = obj.velocity.x * -1;
+    }
+    if (obj.y <= obj.radius || obj.y >= stageHeight - obj.radius) {
+        obj.velocity.y = obj.velocity.y * -1;
+    }
+}
 </script>
 </body>
 </html>
