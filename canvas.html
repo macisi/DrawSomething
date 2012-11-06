@@ -32,7 +32,7 @@ window.requestAnimFrame = (function(callback) {
 })();
 
 var constant = 1e-3; //弹性系数
-var damping = 0.001; //阻尼
+var damping = 0.005; //阻尼
 var bounce_factor = 1;
 var mouseField = 1e-3;
 var mousePos = {
@@ -40,17 +40,17 @@ var mousePos = {
     y: 0
 };
 var mouseIn = 0;
-function Ball(){
-    var dist;
+function Ball(center){
+//    var dist;
     this.radius = 10;
-    this.x = stageWidth / 2;
-    this.y = this.radius;
-    this.center = {x: stageWidth/2, y: stageHeight/2};
+    this.x = center.x;
+    this.y = center.y;
+    this.center = center;
     this.distance = {x: this.center.x - this.x, y: this.center.y - this.y};
     this.velocity = {x: 0, y: 0};
 
     this.getAcceleration = function(){
-        dist = Math.sqrt(Math.pow(this.distance.x, 2) + Math.pow(this.distance.y, 2));
+//        dist = Math.sqrt(Math.pow(this.distance.x, 2) + Math.pow(this.distance.y, 2));
         return {x: constant * this.distance.x - damping * this.velocity.x + (mousePos.x - this.x) * mouseField * mouseIn, y: constant * this.distance.y - damping * this.velocity.y + (mousePos.y - this.y) * mouseField * mouseIn}
     };
 
@@ -62,11 +62,15 @@ function Ball(){
         ctx.fill();
     };
 }
-var ball = new Ball();
+var balls = [];
+balls.push(new Ball({x: stageWidth/2, y: stageHeight/2}));
+balls.push(new Ball({x: stageWidth/2 - 100, y: stageHeight/2 - 100}));
+balls.push(new Ball({x: stageWidth/2 - 100, y: stageHeight/2 + 100}));
+balls.push(new Ball({x: stageWidth/2 + 100, y: stageHeight/2 + 100}));
+balls.push(new Ball({x: stageWidth/2 + 100, y: stageHeight/2 - 100}));
 
 canvas.addEventListener("mousemove", function(evt){
     mousePos = getMousePos(canvas, evt);
-//    console.log(mousePos);
 }, false);
 canvas.addEventListener("mouseover", function(evt){
     mouseIn = 1;
@@ -75,15 +79,21 @@ canvas.addEventListener("mouseout", function(evt){
     mouseIn = 0;
 }, false);
 function anim(){
-    calculate(ball);
+    balls.forEach(function(obj){
+        calculate(obj);
+    });
     ctx.clearRect(0, 0, stageWidth, stageHeight);
-    ball.draw();
+    balls.forEach(function(obj){
+        obj.draw();
+    });
     requestAnimFrame(function() {
         anim();
     });
 }
 anim();
 function calculate(obj){
+    var radius = obj.radius,
+        powerRadius = Math.pow(radius);
     obj.velocity = {
         x: obj.velocity.x + obj.getAcceleration().x,
         y: obj.velocity.y + obj.getAcceleration().y
@@ -94,12 +104,24 @@ function calculate(obj){
     };
     obj.x = obj.distance.x + obj.center.x;
     obj.y = obj.distance.y + obj.center.y;
-    if (obj.x <= obj.radius || obj.x >= stageWidth - obj.radius) {
+    if (obj.x <= radius || obj.x >= stageWidth - radius) {
         obj.velocity.x = obj.velocity.x * -1;
+        obj.x = obj.x < 0 ? 0 : obj.x;
+        obj.x = obj.x > stageWidth - radius ? stageWidth - radius : obj.x;
     }
-    if (obj.y <= obj.radius || obj.y >= stageHeight - obj.radius) {
+    if (obj.y <= radius || obj.y >= stageHeight - radius) {
         obj.velocity.y = obj.velocity.y * -1;
+        obj.y = obj.y < 0 ? 0 : obj.y;
+        obj.y = obj.y > stageHeight - radius ? stageHeight - radius : obj.y;
     }
+    balls.forEach(function(o){
+        if (o !== obj) {
+            if (Math.pow(obj.x - o.x, 2) + Math.pow(obj.y - o.y, 2) <= 4 * powerRadius) {
+                obj.velocity.x = obj.velocity.x * -1;
+                obj.velocity.y = obj.velocity.y * -1;
+            }
+        }
+    });
 }
 </script>
 </body>
