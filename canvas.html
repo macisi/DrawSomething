@@ -10,11 +10,15 @@
 </head>
 <body>
 <canvas id="Js_canvas"></canvas>
+<input type="file">
 <script>
 var canvas = document.getElementById("Js_canvas");
 var ctx = canvas.getContext("2d");
 var stageWidth = canvas.width = window.innerWidth - 30;
-var stageHeight = canvas.height = window.innerHeight - 30;
+var stageHeight = canvas.height = window.innerHeight - 100;
+
+ctx.fillStyle = "#fff";
+ctx.fillRect(0, 0, stageWidth, stageHeight);
 
 function getMousePos(canvas, evt){
     var rect = canvas.getBoundingClientRect();
@@ -31,7 +35,26 @@ window.requestAnimFrame = (function(callback) {
     };
 })();
 
-var constant = 1e-2; //弹性系数
+var imgObj = new Image();
+imgObj.src = "img/GooglePlus 512 Red.png";
+imgObj.onload = function(){
+    ctx.drawImage(imgObj, 50, 50, 64, 64);
+    var imageData = ctx.getImageData(50, 50, 64, 64);
+    var data = imageData.data;
+    var width = imageData.width;
+    var height = imageData.height;
+    var i = 0, j = 0;
+    var colorCollect = [];
+    for (i; i < width; i++ ) {
+        colorCollect[i] = [];
+        for (j; j < height; j++) {
+            colorCollect[i][j] = i * j;
+        }
+    }
+    console.log(colorCollect);
+};
+
+var constant = 1e-3; //弹性系数
 var damping = 0.005; //阻尼
 var bounce_factor = 1;
 var mouseField = 1e-3;
@@ -62,19 +85,7 @@ function Ball(center, fillStyle){
     };
 }
 var balls = [];
-balls.push(new Ball({x: stageWidth/2 - 4, y: stageHeight/2 - 4}, "#ca3f2f"));
-balls.push(new Ball({x: stageWidth/2 + 4, y: stageHeight/2 - 4}, "#ca3f2f"));
-balls.push(new Ball({x: stageWidth/2 + 4, y: stageHeight/2 + 4}, "#ca3f2f"));
-balls.push(new Ball({x: stageWidth/2 - 4, y: stageHeight/2 + 4}, "#ca3f2f"));
-balls.push(new Ball({x: stageWidth/2 - 12, y: stageHeight/2 - 4}, "#ca3f2f"));
-balls.push(new Ball({x: stageWidth/2 - 20, y: stageHeight/2 - 4}, "#ca3f2f"));
-balls.push(new Ball({x: stageWidth/2 - 12, y: stageHeight/2 + 4}, "#ca3f2f"));
-balls.push(new Ball({x: stageWidth/2 - 20, y: stageHeight/2 + 4}, "#ca3f2f"));
-balls.push(new Ball({x: stageWidth/2 + 12, y: stageHeight/2 - 4}, "#ca3f2f"));
-balls.push(new Ball({x: stageWidth/2 + 12, y: stageHeight/2 + 4}, "#ca3f2f"));
-balls.push(new Ball({x: stageWidth/2 + 20, y: stageHeight/2 - 4}, "#ca3f2f"));
-balls.push(new Ball({x: stageWidth/2 + 20, y: stageHeight/2 + 4}, "#ca3f2f"));
-
+//balls.push(new Ball({x: stageWidth/2 - 4, y: stageHeight/2 - 4}, "#ca3f2f"));
 
 
 canvas.addEventListener("mousemove", function(evt){
@@ -87,18 +98,18 @@ canvas.addEventListener("mouseout", function(evt){
     mouseIn = 0;
 }, false);
 function anim(){
-    balls.forEach(function(obj){
-        calculate(obj);
-    });
+//    balls.forEach(function(obj){
+//        calculate(obj);
+//    });
     ctx.clearRect(0, 0, stageWidth, stageHeight);
-    balls.forEach(function(obj){
-        obj.draw();
-    });
+//    balls.forEach(function(obj){
+//        obj.draw();
+//    });
     requestAnimFrame(function() {
         anim();
     });
 }
-anim();
+//anim();
 function calculate(obj){
     var radius = obj.radius,
         powerRadius = Math.pow(radius, 2);
@@ -112,6 +123,7 @@ function calculate(obj){
     };
     obj.x = obj.distance.x + obj.center.x;
     obj.y = obj.distance.y + obj.center.y;
+    //位置计算
     if (obj.x <= radius || obj.x >= stageWidth - radius) {
         obj.velocity.x = obj.velocity.x * -1;
         obj.x = obj.x < radius ? radius : obj.x;
@@ -121,15 +133,17 @@ function calculate(obj){
         obj.velocity.y = obj.velocity.y * -1;
         obj.y = obj.y < radius ? radius : obj.y;
         obj.y = obj.y > stageHeight - radius ? stageHeight - radius : obj.y;
-    }
-    balls.forEach(function(o){
-        if (o !== obj) {
-            if (Math.pow(obj.x - o.x, 2) + Math.pow(obj.y - o.y, 2) <= 4 * powerRadius) {
-                obj.velocity.x = obj.velocity.x * -1;
-                obj.velocity.y = obj.velocity.y * -1;
-            }
-        }
-    });
+    } //碰边判断
+//    balls.forEach(function(o){
+//        if (o !== obj) {
+//            if (Math.pow(obj.x - o.x, 2) + Math.pow(obj.y - o.y, 2) <= 4 * powerRadius) {
+//                obj.velocity.x = obj.velocity.x * -1;
+//                obj.velocity.y = obj.velocity.y * -1;
+//                o.velocity.x = o.velocity.x * -1;
+//                o.velocity.y = o.velocity.y * -1;
+//            }
+//        }
+//    }); //ball碰撞判断
 }
 </script>
 </body>
