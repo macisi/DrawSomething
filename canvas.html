@@ -35,23 +35,66 @@ window.requestAnimFrame = (function(callback) {
     };
 })();
 
+var balls = [];
+//balls.push(new Ball({x: stageWidth/2 - 4, y: stageHeight/2 - 4}, "#ca3f2f"));
+
 var imgObj = new Image();
 imgObj.src = "img/GooglePlus 512 Red.png";
 imgObj.onload = function(){
+    console.time("time");
     ctx.drawImage(imgObj, 50, 50, 64, 64);
     var imageData = ctx.getImageData(50, 50, 64, 64);
     var data = imageData.data;
     var width = imageData.width;
     var height = imageData.height;
-    var i = 0, j = 0;
-    var colorCollect = [];
-    for (i; i < width; i++ ) {
-        colorCollect[i] = [];
-        for (j; j < height; j++) {
-            colorCollect[i][j] = i * j;
-        }
+    var i = 0;
+    var pixCollect = [];
+    for (i; i < width * height; i++) {
+        pixCollect[i] = [];
+        pixCollect[i].push(data[i * 4]);
+        pixCollect[i].push(data[i * 4 + 1]);
+        pixCollect[i].push(data[i * 4 + 2]);
+        pixCollect[i].push(data[i * 4 + 3]);
     }
-    console.log(colorCollect);
+    console.log(data.length)
+    var groupCollect = [];
+    var j = 0;
+    for (j; j < pixCollect.length / 4; j++) {
+        groupCollect[j] = [];
+        groupCollect[j].push(pixCollect[j * 4]);
+        groupCollect[j].push(pixCollect[j * 4 + 1]);
+        groupCollect[j].push(pixCollect[j * 4 + 2]);
+        groupCollect[j].push(pixCollect[j * 4 + 3]);
+    }
+    var group = [];
+    var k = 0;
+    var result = [];
+//    console.log(groupCollect.length);
+    for (k; k < groupCollect.length / 4; k++) {
+        group[k] = groupCollect[k].concat(groupCollect[k + 4], groupCollect[k + 8], groupCollect[k + 12], groupCollect[k + 16], groupCollect[k + 20], groupCollect[k + 24], groupCollect[k + 28], groupCollect[k + 32], groupCollect[k + 36], groupCollect[k + 40], groupCollect[k + 44], groupCollect[k + 48], groupCollect[k + 52], groupCollect[k + 56]);
+        result[k] = {r: 0, g: 0, b: 0, a: 0};
+        group[k].forEach(function(item){
+           result[k].r += item[0];
+           result[k].g += item[1];
+           result[k].b += item[2];
+           result[k].a += item[3];
+        });
+        result[k].r = result[k].r / 256;
+        result[k].g = result[k].g / 256;
+        result[k].b = result[k].b / 256;
+        result[k].a = result[k].a / 256;
+    }
+    console.timeEnd("time");
+//    console.log(result);
+    var rgba, x, y;
+    result.map(function(o, key){
+//        console.log(o);
+//        console.log(key);
+        rgba = "rgba(" + parseInt(o.r) + "," + parseInt(o.b) + "," + parseInt(o.a) + "," + parseInt(o.a) + ")";
+        x = 54 + key % 4 * 4;
+        y = 54 + key - key % 4;
+        balls.push(new Ball({x: x, y: y}, rgba));
+    });
 };
 
 var constant = 1e-3; //弹性系数
@@ -64,7 +107,7 @@ var mousePos = {
 };
 var mouseIn = 0;
 function Ball(center, fillStyle){
-    this.radius = 4;
+    this.radius = 2;
     this.x = center.x;
     this.y = center.y;
     this.center = center;
@@ -84,8 +127,7 @@ function Ball(center, fillStyle){
         ctx.fill();
     };
 }
-var balls = [];
-//balls.push(new Ball({x: stageWidth/2 - 4, y: stageHeight/2 - 4}, "#ca3f2f"));
+
 
 
 canvas.addEventListener("mousemove", function(evt){
@@ -98,18 +140,18 @@ canvas.addEventListener("mouseout", function(evt){
     mouseIn = 0;
 }, false);
 function anim(){
-//    balls.forEach(function(obj){
-//        calculate(obj);
-//    });
+    balls.forEach(function(obj){
+        calculate(obj);
+    });
     ctx.clearRect(0, 0, stageWidth, stageHeight);
-//    balls.forEach(function(obj){
-//        obj.draw();
-//    });
+    balls.forEach(function(obj){
+        obj.draw();
+    });
     requestAnimFrame(function() {
         anim();
     });
 }
-//anim();
+anim();
 function calculate(obj){
     var radius = obj.radius,
         powerRadius = Math.pow(radius, 2);
