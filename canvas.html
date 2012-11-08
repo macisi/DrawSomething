@@ -36,10 +36,12 @@ window.requestAnimFrame = (function(callback) {
 })();
 
 var balls = [];
-//balls.push(new Ball({x: stageWidth/2 - 4, y: stageHeight/2 - 4}, "#ca3f2f"));
+var radius = 2;
+var diameter = 2 * radius;
+
 
 var imgObj = new Image();
-imgObj.src = "img/GooglePlus 512 Red.png";
+imgObj.src = "img/chrome.jpg";
 imgObj.onload = function(){
     console.time("time");
     ctx.drawImage(imgObj, 50, 50, 64, 64);
@@ -48,30 +50,31 @@ imgObj.onload = function(){
     var width = imageData.width;
     var height = imageData.height;
     var i = 0;
-    var pixCollect = [];
+    var pixelCollect = [];
     for (i; i < width * height; i++) {
-        pixCollect[i] = [];
-        pixCollect[i].push(data[i * 4]);
-        pixCollect[i].push(data[i * 4 + 1]);
-        pixCollect[i].push(data[i * 4 + 2]);
-        pixCollect[i].push(data[i * 4 + 3]);
+        pixelCollect[i] = [];
+        pixelCollect[i].push(data[i * 4]);
+        pixelCollect[i].push(data[i * 4 + 1]);
+        pixelCollect[i].push(data[i * 4 + 2]);
+        pixelCollect[i].push(data[i * 4 + 3]);
     }
-    console.log(data.length)
     var groupCollect = [];
     var j = 0;
-    for (j; j < pixCollect.length / 4; j++) {
+    var d;
+    for (j; j < pixelCollect.length / diameter; j++) {
+        d = diameter;
         groupCollect[j] = [];
-        groupCollect[j].push(pixCollect[j * 4]);
-        groupCollect[j].push(pixCollect[j * 4 + 1]);
-        groupCollect[j].push(pixCollect[j * 4 + 2]);
-        groupCollect[j].push(pixCollect[j * 4 + 3]);
+        while (d--) {
+            groupCollect[j].push(pixelCollect[j * diameter + diameter - d - 1]);
+        }
     }
     var group = [];
     var k = 0;
     var result = [];
-//    console.log(groupCollect.length);
-    for (k; k < groupCollect.length / 4; k++) {
-        group[k] = groupCollect[k].concat(groupCollect[k + 4], groupCollect[k + 8], groupCollect[k + 12], groupCollect[k + 16], groupCollect[k + 20], groupCollect[k + 24], groupCollect[k + 28], groupCollect[k + 32], groupCollect[k + 36], groupCollect[k + 40], groupCollect[k + 44], groupCollect[k + 48], groupCollect[k + 52], groupCollect[k + 56]);
+    var mod;
+    for (k; k < groupCollect.length / diameter; k++) {
+        mod = (k - k % 16) / 16;
+        group[k] = groupCollect[mod * 64 + k % 16].concat(groupCollect[mod * 64 + k % 16 + 16], groupCollect[mod * 64 + k % 16 + 32], groupCollect[mod * 64 + k % 16 + 48]);
         result[k] = {r: 0, g: 0, b: 0, a: 0};
         group[k].forEach(function(item){
            result[k].r += item[0];
@@ -79,26 +82,24 @@ imgObj.onload = function(){
            result[k].b += item[2];
            result[k].a += item[3];
         });
-        result[k].r = result[k].r / 256;
-        result[k].g = result[k].g / 256;
-        result[k].b = result[k].b / 256;
-        result[k].a = result[k].a / 256;
+        result[k].r = result[k].r / 16;
+        result[k].g = result[k].g / 16;
+        result[k].b = result[k].b / 16;
+        result[k].a = result[k].a / 16 / 255;
     }
-    console.timeEnd("time");
-//    console.log(result);
     var rgba, x, y;
-    result.map(function(o, key){
-//        console.log(o);
-//        console.log(key);
-        rgba = "rgba(" + parseInt(o.r) + "," + parseInt(o.b) + "," + parseInt(o.a) + "," + parseInt(o.a) + ")";
-        x = 54 + key % 4 * 4;
-        y = 54 + key - key % 4;
+    result.map(function(o, num){
+        rgba = "rgba(" + Math.round(o.r) + "," + Math.round(o.g) + "," + Math.round(o.b) + "," + o.a + ")";
+        x = 54 + num % 16 * 4;
+        y = 54 + (num - num % 16) / 4;
         balls.push(new Ball({x: x, y: y}, rgba));
     });
+    console.timeEnd("time");
+//    console.log(groupCollect.length);
 };
 
 var constant = 1e-3; //弹性系数
-var damping = 0.005; //阻尼
+var damping = 0.01; //阻尼
 var bounce_factor = 1;
 var mouseField = 1e-3;
 var mousePos = {
