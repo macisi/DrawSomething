@@ -10,45 +10,76 @@
 </head>
 <body>
 <canvas id="Js_canvas"></canvas>
-<input type="file">
+<input type="file" id="Js_img">
 <script>
-var imgTransform
+var stage = {
+   getMousePos: function(canvas, evt){
+        var rect = canvas.getBoundingClientRect();
+        var mouseX = evt.clientX - rect.left;
+        var mouseY = evt.clientY - rect.top;
+        return {
+            x: mouseX,
+            y: mouseY
+        };
+    },
+    requestAnimFrame: function(callback) {
+        return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback) {
+            window.setTimeout(callback, 1000 / 60);
+        };
+    },
+};
+function Particle(center, color){
+    this.radius = radius;
+    this.x = center.x;
+    this.y = center.y;
+    this.center = center;
+    this.distance = {x: this.center.x - this.x, y: this.center.y - this.y};
+    this.velocity = {x: 0, y: 0};
 
+    this.getAcceleration = function(){
+        return {x: constant * this.distance.x - damping * this.velocity.x + (mousePos.x - this.x) * mouseField * mouseIn, y: constant * this.distance.y - damping * this.velocity.y + (mousePos.y - this.y) * mouseField * mouseIn}
+    };
+
+    this.draw = function(){
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        ctx.closePath();
+        ctx.fill();
+    };
+}
+
+function getDistance(point1, point2) {
+    var x1 = point1.x,
+        x2 = point2.x,
+        y1 = point1.y,
+        y2 = point2.y;
+    var d1 = x1-x2,
+        d2 = y1-y2;
+
+    return Math.sqrt(d1*d1 + d2*d2);
+}
 
 var canvas = document.getElementById("Js_canvas");
 var ctx = canvas.getContext("2d");
 var stageWidth = canvas.width = window.innerWidth - 30;
 var stageHeight = canvas.height = window.innerHeight - 100;
 
-function getMousePos(canvas, evt){
-    var rect = canvas.getBoundingClientRect();
-    var mouseX = evt.clientX - rect.left;
-    var mouseY = evt.clientY - rect.top;
-    return {
-        x: mouseX,
-        y: mouseY
-    };
-}
-window.requestAnimFrame = (function(callback) {
-    return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback) {
-        window.setTimeout(callback, 1000 / 60);
-    };
-})();
-
 var balls = [];
 var radius = 2;
 var diameter = 2 * radius;
-var imgWidth = 128;
-var imgHeight = 128;
+var imgWidth = 64;
+var imgHeight = 96;
 var multipleX = imgWidth / diameter;
 var multipleY = imgHeight / diameter;
 
 var imgObj = new Image();
-imgObj.src = "img/GooglePlus 512 Red.png";
+imgObj.src = "img/beauty.jpg";
+
 imgObj.onload = function(){
-    console.time("time");
-    ctx.drawImage(imgObj, 50, 50, imgWidth, imgHeight);
-    var imageData = ctx.getImageData(50, 50, imgWidth, imgHeight);
+//    console.time("time");
+    ctx.drawImage(imgObj, (stageWidth - imgWidth) / 2, (stageHeight - imgHeight) / 2, imgWidth, imgHeight);
+    var imageData = ctx.getImageData((stageWidth - imgWidth) / 2, (stageHeight - imgHeight) / 2, imgWidth, imgHeight);
     var data = imageData.data;
     var width = imageData.width;
     var height = imageData.height;
@@ -96,11 +127,11 @@ imgObj.onload = function(){
     var rgba, x, y;
     result.map(function(o, num){
         rgba = "rgba(" + Math.round(o.r) + "," + Math.round(o.g) + "," + Math.round(o.b) + "," + o.a + ")";
-        x = 54 + num % multipleX * diameter;
-        y = 54 + (num - num % multipleX) / multipleX * diameter;
-        balls.push(new Ball({x: x, y: y}, rgba));
+        x = (stageWidth - imgWidth) / 2 + num % multipleX * diameter;
+        y = (stageHeight - imgHeight) / 2 + (num - num % multipleX) / multipleX * diameter;
+        balls.push(new Particle({x: x, y: y}, rgba));
     });
-    console.timeEnd("time");
+//    console.timeEnd("time");
 };
 
 var constant = 1e-3; //弹性系数
@@ -112,32 +143,9 @@ var mousePos = {
     y: 0
 };
 var mouseIn = 0;
-function Ball(center, fillStyle){
-    this.radius = radius;
-    this.x = center.x;
-    this.y = center.y;
-    this.center = center;
-    this.distance = {x: this.center.x - this.x, y: this.center.y - this.y};
-    this.velocity = {x: 0, y: 0};
-
-    this.getAcceleration = function(){
-//        dist = Math.sqrt(Math.pow(this.distance.x, 2) + Math.pow(this.distance.y, 2));
-        return {x: constant * this.distance.x - damping * this.velocity.x + (mousePos.x - this.x) * mouseField * mouseIn, y: constant * this.distance.y - damping * this.velocity.y + (mousePos.y - this.y) * mouseField * mouseIn}
-    };
-
-    this.draw = function(){
-        ctx.fillStyle = fillStyle;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-        ctx.closePath();
-        ctx.fill();
-    };
-}
-
-
 
 canvas.addEventListener("mousemove", function(evt){
-    mousePos = getMousePos(canvas, evt);
+    mousePos = stage.getMousePos(canvas, evt);
 }, false);
 canvas.addEventListener("mouseover", function(evt){
     mouseIn = 1;
@@ -147,20 +155,18 @@ canvas.addEventListener("mouseout", function(evt){
 }, false);
 function anim(){
     balls.forEach(function(obj){
-        calculate(obj);
+        calculate(obj, obj.radius);
     });
     ctx.clearRect(0, 0, stageWidth, stageHeight);
     balls.forEach(function(obj){
         obj.draw();
     });
-    requestAnimFrame(function() {
+    stage.requestAnimFrame()(function() {
         anim();
     });
 }
 anim();
-function calculate(obj){
-    var radius = obj.radius,
-        powerRadius = Math.pow(radius, 2);
+function calculate(obj, radius){
     obj.velocity = {
         x: obj.velocity.x + obj.getAcceleration().x,
         y: obj.velocity.y + obj.getAcceleration().y
@@ -181,17 +187,17 @@ function calculate(obj){
         obj.velocity.y = obj.velocity.y * -1;
         obj.y = obj.y < radius ? radius : obj.y;
         obj.y = obj.y > stageHeight - radius ? stageHeight - radius : obj.y;
-    } //碰边判断
-//    balls.forEach(function(o){
-//        if (o !== obj) {
-//            if (Math.pow(obj.x - o.x, 2) + Math.pow(obj.y - o.y, 2) <= 4 * powerRadius) {
-//                obj.velocity.x = obj.velocity.x * -1;
-//                obj.velocity.y = obj.velocity.y * -1;
-//                o.velocity.x = o.velocity.x * -1;
-//                o.velocity.y = o.velocity.y * -1;
-//            }
-//        }
-//    }); //ball碰撞判断
+    }//碰边判断
+    balls.forEach(function(o){
+        if (o !== obj) {
+            if (getDistance(obj, o) <= 2 * radius) {
+                obj.velocity.x = obj.velocity.x * -1;
+                obj.velocity.y = obj.velocity.y * -1;
+                o.velocity.x = o.velocity.x * -1;
+                o.velocity.y = o.velocity.y * -1;
+            }
+        }
+    }); //ball碰撞判断
 }
 </script>
 </body>
