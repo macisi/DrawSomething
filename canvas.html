@@ -12,13 +12,13 @@
 <canvas id="Js_canvas"></canvas>
 <input type="file">
 <script>
+var imgTransform
+
+
 var canvas = document.getElementById("Js_canvas");
 var ctx = canvas.getContext("2d");
 var stageWidth = canvas.width = window.innerWidth - 30;
 var stageHeight = canvas.height = window.innerHeight - 100;
-
-ctx.fillStyle = "#fff";
-ctx.fillRect(0, 0, stageWidth, stageHeight);
 
 function getMousePos(canvas, evt){
     var rect = canvas.getBoundingClientRect();
@@ -38,14 +38,17 @@ window.requestAnimFrame = (function(callback) {
 var balls = [];
 var radius = 2;
 var diameter = 2 * radius;
-
+var imgWidth = 128;
+var imgHeight = 128;
+var multipleX = imgWidth / diameter;
+var multipleY = imgHeight / diameter;
 
 var imgObj = new Image();
-imgObj.src = "img/chrome.jpg";
+imgObj.src = "img/GooglePlus 512 Red.png";
 imgObj.onload = function(){
     console.time("time");
-    ctx.drawImage(imgObj, 50, 50, 64, 64);
-    var imageData = ctx.getImageData(50, 50, 64, 64);
+    ctx.drawImage(imgObj, 50, 50, imgWidth, imgHeight);
+    var imageData = ctx.getImageData(50, 50, imgWidth, imgHeight);
     var data = imageData.data;
     var width = imageData.width;
     var height = imageData.height;
@@ -73,8 +76,11 @@ imgObj.onload = function(){
     var result = [];
     var mod;
     for (k; k < groupCollect.length / diameter; k++) {
-        mod = (k - k % 16) / 16;
-        group[k] = groupCollect[mod * 64 + k % 16].concat(groupCollect[mod * 64 + k % 16 + 16], groupCollect[mod * 64 + k % 16 + 32], groupCollect[mod * 64 + k % 16 + 48]);
+        mod = (k - k % multipleX) / multipleX;
+        group[k] = [];
+        for (var t = 0; t < diameter; t++) {
+            group[k] = group[k].concat(groupCollect[mod * diameter * groupCollect.length / imgHeight + k % multipleX + multipleX * t]);
+        }
         result[k] = {r: 0, g: 0, b: 0, a: 0};
         group[k].forEach(function(item){
            result[k].r += item[0];
@@ -82,20 +88,19 @@ imgObj.onload = function(){
            result[k].b += item[2];
            result[k].a += item[3];
         });
-        result[k].r = result[k].r / 16;
-        result[k].g = result[k].g / 16;
-        result[k].b = result[k].b / 16;
-        result[k].a = result[k].a / 16 / 255;
+        result[k].r = result[k].r / Math.pow(diameter, 2);
+        result[k].g = result[k].g / Math.pow(diameter, 2);
+        result[k].b = result[k].b / Math.pow(diameter, 2);
+        result[k].a = result[k].a / Math.pow(diameter, 2) / 255;
     }
     var rgba, x, y;
     result.map(function(o, num){
         rgba = "rgba(" + Math.round(o.r) + "," + Math.round(o.g) + "," + Math.round(o.b) + "," + o.a + ")";
-        x = 54 + num % 16 * 4;
-        y = 54 + (num - num % 16) / 4;
+        x = 54 + num % multipleX * diameter;
+        y = 54 + (num - num % multipleX) / multipleX * diameter;
         balls.push(new Ball({x: x, y: y}, rgba));
     });
     console.timeEnd("time");
-//    console.log(groupCollect.length);
 };
 
 var constant = 1e-3; //弹性系数
@@ -108,7 +113,7 @@ var mousePos = {
 };
 var mouseIn = 0;
 function Ball(center, fillStyle){
-    this.radius = 2;
+    this.radius = radius;
     this.x = center.x;
     this.y = center.y;
     this.center = center;
