@@ -10,7 +10,6 @@
 </head>
 <body>
 <canvas id="Js_canvas"></canvas>
-<input type="file" id="Js_img">
 <script>
 var stage = {
    getMousePos: function(canvas, evt){
@@ -66,10 +65,10 @@ var stageWidth = canvas.width = window.innerWidth - 30;
 var stageHeight = canvas.height = window.innerHeight - 100;
 
 var balls = [];
-var radius = 2;
+var radius = 4;
 var diameter = 2 * radius;
-var imgWidth = 64;
-var imgHeight = 96;
+var imgWidth = 256;
+var imgHeight = 384;
 var multipleX = imgWidth / diameter;
 var multipleY = imgHeight / diameter;
 
@@ -153,10 +152,24 @@ canvas.addEventListener("mouseover", function(evt){
 canvas.addEventListener("mouseout", function(evt){
     mouseIn = 0;
 }, false);
+
+var tempX, tempY;
 function anim(){
     balls.forEach(function(obj){
         calculate(obj, obj.radius);
     });
+//    for (var i = 0, l = balls.length; i < l; i++) {
+//        for (var j = 0; j < i; j++) {
+//            if (getDistance(balls[i], balls[j]) <= 2 * radius) {
+//                tempX = balls[i].velocity.x;
+//                tempY = balls[i].velocity.y;
+//                balls[i].velocity.x = balls[j].velocity.x;
+//                balls[i].velocity.y = balls[j].velocity.y;
+//                balls[j].velocity.x = tempX;
+//                balls[j].velocity.y = tempY;
+//            }
+//        }
+//    }
     ctx.clearRect(0, 0, stageWidth, stageHeight);
     balls.forEach(function(obj){
         obj.draw();
@@ -167,6 +180,10 @@ function anim(){
 }
 anim();
 function calculate(obj, radius){
+    var originPos = {
+        x: obj.x,
+        y: obj.y
+    };
     obj.velocity = {
         x: obj.velocity.x + obj.getAcceleration().x,
         y: obj.velocity.y + obj.getAcceleration().y
@@ -180,24 +197,14 @@ function calculate(obj, radius){
     //位置计算
     if (obj.x <= radius || obj.x >= stageWidth - radius) {
         obj.velocity.x = obj.velocity.x * -1;
-        obj.x = obj.x < radius ? radius : obj.x;
-        obj.x = obj.x > stageWidth - radius ? stageWidth - radius : obj.x;
+        obj.x = obj.x < radius ? originPos.x - obj.x : obj.x;
+        obj.x = obj.x > stageWidth - radius  ? obj.x + stageWidth - originPos.x : obj.x;
     }
     if (obj.y <= radius || obj.y >= stageHeight - radius) {
         obj.velocity.y = obj.velocity.y * -1;
-        obj.y = obj.y < radius ? radius : obj.y;
-        obj.y = obj.y > stageHeight - radius ? stageHeight - radius : obj.y;
+        obj.y = obj.y < radius ? originPos.y - obj.y : obj.y;
+        obj.y = obj.y > stageHeight - radius ? obj.y + stageHeight - originPos.y : obj.y;
     }//碰边判断
-    balls.forEach(function(o){
-        if (o !== obj) {
-            if (getDistance(obj, o) <= 2 * radius) {
-                obj.velocity.x = obj.velocity.x * -1;
-                obj.velocity.y = obj.velocity.y * -1;
-                o.velocity.x = o.velocity.x * -1;
-                o.velocity.y = o.velocity.y * -1;
-            }
-        }
-    }); //ball碰撞判断
 }
 </script>
 </body>
