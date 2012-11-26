@@ -1,0 +1,79 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title>learn canvas</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <style>
+        canvas { border: 1px solid #000;}
+    </style>
+</head>
+<body>
+<canvas id="Js_canvas"></canvas>
+<script>
+var canvas, ctx;
+var stageWidth = window.innerWidth - 30;
+var stageHeight = window.innerHeight - 80;
+
+function makeStage(id){
+    canvas = document.getElementById(id);
+    ctx = canvas.getContext("2d");
+    canvas.width  = stageWidth;
+    canvas.height = stageHeight;
+}
+var requestAnimFrame = (function(callback) {
+    return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback) {
+        window.setTimeout(callback, 1000 / 60);
+    };
+})();
+
+
+var getMousePos = function(canvas, evt){
+    var rect = canvas.getBoundingClientRect();
+    var mouseX = evt.clientX - rect.left;
+    var mouseY = evt.clientY - rect.top;
+    return {
+        x: mouseX,
+        y: mouseY
+    };
+}
+
+//绘制背景方法
+function drawBackground(){
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, stageWidth, stageHeight);
+    ctx.fill();
+}
+
+var Particle = function(pos, radius){
+    this.position = pos;
+    this.radius = radius ? radius : 8;
+
+    this.setRadius = function(){
+
+    };
+
+    this.draw = function(){
+        ctx.fillStyle = "#f00";
+        ctx.beginPath();
+        ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2, false);
+        ctx.closePath();
+        ctx.fill();
+    };
+};
+
+makeStage("Js_canvas");
+var particle = new Particle({x: stageWidth / 2, y: stageHeight / 2});
+
+
+
+function updateSence(){
+    ctx.clearRect(0, 0, stageWidth, stageHeight);
+    drawBackground();
+    particle.draw();
+    requestAnimFrame(updateSence);
+}
+updateSence();
+</script>
+</body>
+</html>
