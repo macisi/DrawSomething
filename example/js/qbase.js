@@ -147,10 +147,17 @@ QP = (function(w){
     };
 
     var _callback = function(obj){
+        var map = {
+            1: "nu",
+            2: "p",
+            3: "r",
+            4: "s",
+            5: "u"
+        };
         if (obj.domain) {
             photo.uin = obj.uin;
             photo.album_domain = obj[obj.domain.default].p;
-            photo.list_domain = obj[obj.domain.default].s;
+            photo.list_domain = obj[obj.domain.default][map[obj.idcno]];
             console.log(photo);
             doms.requestJsonp(request.album[0] + photo.album_domain + request.album[1] + photo.uin + request.album[2]);
         } else {

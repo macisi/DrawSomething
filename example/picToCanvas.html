@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title>learn canvas</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <style>
+        canvas { border: 1px solid #000;}
+    </style>
+</head>
+<body>
+<canvas id="Js_canvas"></canvas>
+<script src="js/Kanvas.js"></script>
+<script>
+(function(){
+    var stageWidth = window.innerWidth - 30;
+    var stageHeight = window.innerHeight - 100;
+    var canvas = Kanvas.getCanvas("#Js_canvas", {
+        width: stageWidth,
+        height: stageHeight
+    });
+    var ctx = canvas.getContext("2d");
+    var reader = new FileReader();
+    var file, pos, timeStart, timeStamp;
+    var image = {
+        imgObj: null, //图片对象
+        imageData: null, //图片数据
+        imagePos: {}, //图片坐标
+        movable: false,
+        deltaPos: {}, //鼠标按下处与图片位置相对坐标
+        velocity: {x: 0, y: 0}
+    };
+
+    function loadImg(file, pos) {
+        var position = pos ? pos : {x: 0, y: 0};
+        reader.readAsDataURL(file[0]);
+        reader.onloadend = function(){
+            image.imgObj = new Image();
+            image.imgObj.onload = function(){
+                ctx.drawImage(this, pos.x, pos.y);
+                image.imageData = ctx.getImageData(pos.x, pos.y, this.width, this.height);
+                image.imagePos = {x: pos.x, y: pos.y};
+            };
+            image.imgObj.src = reader.result;
+        };
+    }
+
+    function move() {
+        timeStart = new Date().getTime();
+        console.log(image.velocity);
+        if (image.velocity.x === 0 && image.velocity.y === 0) {
+            Kanvas.cancelAnimationFrame.call(window, frame);
+            return;
+        }
+        timeStamp = new Date().getTime() - timeStart;
+        image.imagePos.y = image.imagePos.y + timeStamp * image.velocity.y;
+        image.imagePos.x = image.imagePos.x + timeStamp * image.velocity.x;
+        if (image.velocity.y !== 0) {
+            image.velocity.y = image.velocity.y > 0 ? Math.ceil(image.velocity.y * 10 - image.velocity.y / Math.abs(image.velocity.y)) / 10 : Math.floor(image.velocity.y * 100 - image.velocity.y / Math.abs(image.velocity.y)) / 100;
+        }
+        if (image.velocity.x !== 0) {
+            image.velocity.x = image.velocity.x > 0 ? Math.ceil(image.velocity.x * 10 - image.velocity.x / Math.abs(image.velocity.x)) / 10 : Math.floor(image.velocity.x * 100 - image.velocity.x / Math.abs(image.velocity.x)) / 100;
+        }
+        ctx.clearRect(0, 0, stageWidth, stageHeight);
+        ctx.putImageData(image.imageData, image.imagePos.x, image.imagePos.y);
+
+        frame = Kanvas.requestAnimationFrame.call(window, move);
+    }
+
+    canvas.addEventListener("mousedown", function(e){
+        pos = Kanvas.getMousePosition(canvas, e);
+        if (image.imageData && pos.x >= image.imagePos.x && pos.x <= image.imagePos.x + image.imageData.width && pos.y >= image.imagePos.y && pos.y <= image.imagePos.y + image.imageData.height) {
+            image.movable = true;
+            image.deltaPos = {x: pos.x - image.imagePos.x, y: pos.y - image.imagePos.y};
+            timeStart = new Date().getTime();
+        }
+    }, false);
+    canvas.addEventListener("mousemove", function(e){
+        if (image.movable && image.imageData) {
+            timeStamp = new Date().getTime() - timeStart;
+            pos = Kanvas.getMousePosition(canvas, e);
+            image.velocity = {x: (pos.x -  image.imagePos.x - image.deltaPos.x) / timeStamp, y: (pos.y - image.imagePos.y - image.deltaPos.y) / timeStamp};
+            ctx.clearRect(0, 0, stageWidth, stageHeight);
+            ctx.putImageData(image.imageData, pos.x - image.deltaPos.x, pos.y - image.deltaPos.y);
+            image.imagePos =  {x: pos.x - image.deltaPos.x, y: pos.y - image.deltaPos.y};
+            timeStart = new Date().getTime();
+        }
+    }, false);
+    canvas.addEventListener("mouseup", function(e){
+        image.movable = false;
+        if (image.velocity.x !== 0 || image.velocity.y !== 0) {
+            move();
+        }
+    }, false);
+    canvas.addEventListener("dragover", function(e){
+        e.stopPropagation();
+        e.preventDefault();
+    }, false);
+    canvas.addEventListener("drop", function(e){
+        e.stopPropagation();
+        e.preventDefault();
+        pos = Kanvas.getMousePosition(canvas, e);
+        file = e.dataTransfer.files;
+        loadImg(file, pos);
+    }, false);
+
+}());
+</script>
+</body>
+</html>
