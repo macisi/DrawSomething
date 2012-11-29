@@ -10,6 +10,7 @@
 </head>
 <body>
 <canvas id="Js_canvas"></canvas>
+<input type="file" accept="image/*" id="Js_file">
 <script src="js/Kanvas.js"></script>
 <script>
 (function(){
@@ -28,67 +29,134 @@
         imagePos: {}, //图片坐标
         movable: false,
         deltaPos: {}, //鼠标按下处与图片位置相对坐标
-        velocity: {x: 0, y: 0}
+        velocity: {x: 0, y: 0},
     };
 
     function loadImg(file, pos) {
-        var position = pos ? pos : {x: 0, y: 0};
-        reader.readAsDataURL(file[0]);
-        reader.onloadend = function(){
-            image.imgObj = new Image();
-            image.imgObj.onload = function(){
-                ctx.drawImage(this, pos.x, pos.y);
-                image.imageData = ctx.getImageData(pos.x, pos.y, this.width, this.height);
-                image.imagePos = {x: pos.x, y: pos.y};
+        if (/^image\//.test(file[0].type)) {
+            var position = pos ? pos : {x: 0, y: 0},
+                w, h, aspectRatio;
+            ctx.clearRect(0, 0, stageWidth, stageHeight);
+            reader.readAsDataURL(file[0]);
+            reader.onloadend = function(){
+                image.imgObj = new Image();
+                image.imgObj.onload = function(){
+                    aspectRatio = this.width / this.height;
+                    if (this.width > stageWidth && this.height <= stageHeight) {
+                        w = stageWidth;
+                        h = w / aspectRatio;
+                    } else if (this.height > stageHeight && this.width <= stageWidth) {
+                        h = stageHeight;
+                        w = h * aspectRatio;
+                    } else if (this.width > stageWidth && this.height > stageHeight) {
+                        if (stageWidth / stageHeight > aspectRatio) {
+                            h = stageHeight;
+                            w = h * aspectRatio;
+                        } else {
+                            w = stageWidth;
+                            h = w / aspectRatio;
+                        }
+                    } else {
+                        w = this.width;
+                        h = this.height;
+                    }
+                    ctx.drawImage(this, position.x, position.y, w, h);
+                    w = w > stageWidth - position.x ? stageWidth - position.x : w;
+                    h = h > stageHeight - position.y ? stageHeight - position.y : h;
+                    image.imageData = ctx.getImageData(position.x, position.y, w, h);
+                    image.imagePos = {x: position.x, y: position.y};
+                };
+                image.imgObj.src = reader.result;
             };
-            image.imgObj.src = reader.result;
-        };
+        } else {
+            alert("请确定插入的是图片");
+            return;
+        }
     }
 
     function move() {
-        timeStart = new Date().getTime();
-        console.log(image.velocity);
         if (image.velocity.x === 0 && image.velocity.y === 0) {
             Kanvas.cancelAnimationFrame.call(window, frame);
             return;
         }
-        timeStamp = new Date().getTime() - timeStart;
-        image.imagePos.y = image.imagePos.y + timeStamp * image.velocity.y;
-        image.imagePos.x = image.imagePos.x + timeStamp * image.velocity.x;
-        if (image.velocity.y !== 0) {
-            image.velocity.y = image.velocity.y > 0 ? Math.ceil(image.velocity.y * 10 - image.velocity.y / Math.abs(image.velocity.y)) / 10 : Math.floor(image.velocity.y * 100 - image.velocity.y / Math.abs(image.velocity.y)) / 100;
+        timeStamp = getTimeStamp(timeStart);
+        timeStart = new Date().getTime();
+//        console.log(timeStamp);
+        image.imagePos.y = image.imageData.height === stageHeight ? 0 : ~~(image.imagePos.y + timeStamp * image.velocity.y + 0.5); //Math.round's hack:~~(n + 0.5)
+        image.imagePos.x = image.imageData.width === stageWidth ? 0 : ~~(image.imagePos.x + timeStamp * image.velocity.x + 0.5);
+        image.velocity.y = image.velocity.y === 0 ? image.velocity.y : calVelocity(image.velocity.y, 50, 1);
+        image.velocity.x = image.velocity.x === 0 ? image.velocity.x : calVelocity(image.velocity.x, 50, 1);
+        //判断x方向是否超出边界
+        if (image.imagePos.x < 0 || image.imagePos.x > stageWidth - image.imageData.width) {
+            image.imagePos.x = checkBounary(image.imagePos.x, 0, stageWidth - image.imageData.width);
+            image.velocity.x = - image.velocity.x;
         }
-        if (image.velocity.x !== 0) {
-            image.velocity.x = image.velocity.x > 0 ? Math.ceil(image.velocity.x * 10 - image.velocity.x / Math.abs(image.velocity.x)) / 10 : Math.floor(image.velocity.x * 100 - image.velocity.x / Math.abs(image.velocity.x)) / 100;
+        //判断y方向是否超出边界
+        if (image.imagePos.y < 0 || image.imagePos.y > stageHeight - image.imageData.height) {
+            image.imagePos.y = checkBounary(image.imagePos.y, 0, stageHeight - image.imageData.height);
+            image.velocity.y = - image.velocity.y;
         }
+
         ctx.clearRect(0, 0, stageWidth, stageHeight);
-        ctx.putImageData(image.imageData, image.imagePos.x, image.imagePos.y);
+        try {
+            ctx.putImageData(image.imageData, image.imagePos.x, image.imagePos.y);
+        } catch (e) {
+            console.log(e);
+        }
 
         frame = Kanvas.requestAnimationFrame.call(window, move);
     }
+    //边界检测
+    function checkBounary(destination, criticalLeft, criticalRight) {
+        var dastinate;
+        if (destination < criticalLeft) {
+            destinate = 2 * criticalLeft - destination;
+        } else if (destination > criticalRight) {
+            destinate = 2 * criticalRight - destination;
+        }
+        if (destinate < criticalLeft || destinate > criticalRight) {
+            checkBounary(destinate, criticalLeft, criticalRight);
+        } else {
+            return destinate;
+        }
+    }
+    //速度计算
+    function calVelocity(velocity, accuracy, damp) {
+        velocity = velocity > 0 ? ~~(velocity * accuracy - damp * velocity / Math.abs(velocity)) / accuracy : Math.ceil(velocity * accuracy - damp * velocity / Math.abs(velocity)) / accuracy; //Math.floor的hack:~~
+        return velocity;
+    }
+    //获取时间差
+    function getTimeStamp(timeStart) {
+        if (timeStart === null) {
+            timeStart = new Date().getTime();
+        }
+        return new Date().getTime() - timeStart;
+    }
+
 
     canvas.addEventListener("mousedown", function(e){
         pos = Kanvas.getMousePosition(canvas, e);
         if (image.imageData && pos.x >= image.imagePos.x && pos.x <= image.imagePos.x + image.imageData.width && pos.y >= image.imagePos.y && pos.y <= image.imagePos.y + image.imageData.height) {
             image.movable = true;
             image.deltaPos = {x: pos.x - image.imagePos.x, y: pos.y - image.imagePos.y};
-            timeStart = new Date().getTime();
         }
     }, false);
     canvas.addEventListener("mousemove", function(e){
         if (image.movable && image.imageData) {
-            timeStamp = new Date().getTime() - timeStart;
+            timeStamp = getTimeStamp(timeStart);
             pos = Kanvas.getMousePosition(canvas, e);
-            image.velocity = {x: (pos.x -  image.imagePos.x - image.deltaPos.x) / timeStamp, y: (pos.y - image.imagePos.y - image.deltaPos.y) / timeStamp};
+            image.velocity = {x: ~~((pos.x -  image.imagePos.x - image.deltaPos.x) * 100 / timeStamp + 0.5) / 100, y: ~~((pos.y - image.imagePos.y - image.deltaPos.y) * 100 / timeStamp + 0.5) / 100}; //Math.round的hack:~~(n + 0.5)
+            image.imagePos.x = pos.x - image.deltaPos.x < 0 ? 0 : (pos.x - image.deltaPos.x > stageWidth - image.imageData.width ? stageWidth - image.imageData.width : pos.x - image.deltaPos.x);
+            image.imagePos.y = pos.y - image.deltaPos.y < 0 ? 0 : (pos.y - image.deltaPos.y > stageHeight - image.imageData.height ? stageHeight - image.imageData.height : pos.y - image.deltaPos.y);
             ctx.clearRect(0, 0, stageWidth, stageHeight);
-            ctx.putImageData(image.imageData, pos.x - image.deltaPos.x, pos.y - image.deltaPos.y);
-            image.imagePos =  {x: pos.x - image.deltaPos.x, y: pos.y - image.deltaPos.y};
+            ctx.putImageData(image.imageData, image.imagePos.x, image.imagePos.y);
             timeStart = new Date().getTime();
         }
     }, false);
     canvas.addEventListener("mouseup", function(e){
         image.movable = false;
         if (image.velocity.x !== 0 || image.velocity.y !== 0) {
+            //timeStamp = null;
             move();
         }
     }, false);
@@ -103,7 +171,9 @@
         file = e.dataTransfer.files;
         loadImg(file, pos);
     }, false);
-
+    document.querySelector("#Js_file").addEventListener("change", function(e){
+        loadImg(e.target.files);
+    }, false);
 }());
 </script>
 </body>
