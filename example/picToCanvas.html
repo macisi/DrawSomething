@@ -11,6 +11,7 @@
 <body>
 <canvas id="Js_canvas"></canvas>
 <input type="file" accept="image/*" id="Js_file">
+<button id="ConvertToGrey">灰度</button>
 <script src="js/Kanvas.js"></script>
 <script>
 (function(){
@@ -35,31 +36,18 @@
     function loadImg(file, pos) {
         if (/^image\//.test(file[0].type)) {
             var position = pos ? pos : {x: 0, y: 0},
-                w, h, aspectRatio;
+                w, h, aspectRatio, size;
             ctx.clearRect(0, 0, stageWidth, stageHeight);
             reader.readAsDataURL(file[0]);
-            reader.onloadend = function(){
+            reader.onload = function(){
+                //文件读取成功完成时触发
                 image.imgObj = new Image();
                 image.imgObj.onload = function(){
-                    aspectRatio = this.width / this.height;
-                    if (this.width > stageWidth && this.height <= stageHeight) {
-                        w = stageWidth;
-                        h = w / aspectRatio;
-                    } else if (this.height > stageHeight && this.width <= stageWidth) {
-                        h = stageHeight;
-                        w = h * aspectRatio;
-                    } else if (this.width > stageWidth && this.height > stageHeight) {
-                        if (stageWidth / stageHeight > aspectRatio) {
-                            h = stageHeight;
-                            w = h * aspectRatio;
-                        } else {
-                            w = stageWidth;
-                            h = w / aspectRatio;
-                        }
-                    } else {
-                        w = this.width;
-                        h = this.height;
-                    }
+                    w = this.width;
+                    h = this.height;
+                    size = adjustSize(w, h, stageWidth, stageHeight);
+                    w = size[0];
+                    h = size[1];
                     ctx.drawImage(this, position.x, position.y, w, h);
                     w = w > stageWidth - position.x ? stageWidth - position.x : w;
                     h = h > stageHeight - position.y ? stageHeight - position.y : h;
@@ -69,10 +57,12 @@
                 image.imgObj.src = reader.result;
             };
         } else {
-            alert("请确定插入的是图片");
+            alert("插入的文件格式无效");
             return;
         }
+
     }
+
 
     function move() {
         if (image.velocity.x === 0 && image.velocity.y === 0) {
@@ -106,6 +96,19 @@
 
         frame = Kanvas.requestAnimationFrame.call(window, move);
     }
+
+    // 限制图片尺寸
+    function adjustSize(width, height, limitWidth, limitHeight) {
+        var aspectRatio = width / height;
+        if (limitWidth / limitHeight > aspectRatio) {
+            height = height > limitHeight ? limitHeight : height;
+            width = height * aspectRatio
+        } else {
+            width = width > limitWidth ? limitWidth : width;
+            height = width / aspectRatio;
+        }
+        return [width, height];
+    }
     //边界检测
     function checkBounary(destination, criticalLeft, criticalRight) {
         var dastinate;
@@ -131,6 +134,54 @@
             timeStart = new Date().getTime();
         }
         return new Date().getTime() - timeStart;
+    }
+    //分解
+    function getPixelData(imageData) {
+        var data = imageData.data,
+            width = imageData.width,
+            height = imageData.height,
+            number = data.length,
+            pixelData = [],
+            i = 0;
+
+        for (; i < width * height; i++) {
+            pixelData[i] = [];
+            pixelData[i].push(data[i * 4]);
+            pixelData[i].push(data[i * 4 + 1]);
+            pixelData[i].push(data[i * 4 + 2]);
+            pixelData[i].push(data[i * 4 + 3]);
+        }
+        return pixelData;
+    }
+    //转灰度
+    function convertToGrey(imageData) {
+        var data = imageData.data,
+            length = data.length,
+            grey;
+        for (var i = 0; i < length; i = i + 4) {
+            grey = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+            data[i] = grey;
+            data[i + 1] = grey;
+            data[i + 2] = grey;
+        }
+        return imageData;
+    }
+    //二值化
+    function binarize(imageData) {
+        var data = imageData.data,
+            length = data.length;
+        for (var i = 0; i < length; i = i + 4) {
+
+        }
+        return imageData;
+    }
+    //画圆
+    function drawCircle(pos, radius, color) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2, false);
+        ctx.closePath();
+        ctx.fill();
     }
 
 
@@ -173,6 +224,10 @@
     }, false);
     document.querySelector("#Js_file").addEventListener("change", function(e){
         loadImg(e.target.files);
+    }, false);
+    //图像处理
+    document.querySelector("#ConvertToGrey").addEventListener("click", function(e){
+        ctx.putImageData(convertToGrey(image.imageData), 0, 0);
     }, false);
 }());
 </script>
