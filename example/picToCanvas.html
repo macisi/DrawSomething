@@ -12,6 +12,7 @@
 <canvas id="Js_canvas"></canvas>
 <input type="file" accept="image/*" id="Js_file">
 <button id="ConvertToGrey">灰度</button>
+<button id="gaussian">高斯模糊</button>
 <script src="js/Kanvas.js"></script>
 <script>
 (function(){
@@ -175,6 +176,64 @@
         }
         return imageData;
     }
+
+    /**
+     * 高斯模糊
+     * @param s sigama方差
+     * @param k 矩阵维数2k+1
+     */
+    function gaussian(s, k, imageData) {
+        //高斯卷积核
+        var kernal = (function(s,k){
+            var sigama = s,
+                ss = sigama * sigama,
+                factor = 2 * Math.PI * ss,
+                size = 2 * k + 1,
+                matrix = [],
+                sum = 0;
+            for (var i = 0; i < size; i++) {
+                matrix[i] = [];
+                for (var j = 0; j < size; j++) {
+                    matrix[i][j] = (1 / factor) * Math.exp(-((i-k) * (i-k) + (j-k) * (j-k)) / (2 * ss));
+                    sum = sum + matrix[i][j];
+                }
+            }
+            //归一化
+            matrix.forEach(function(value, index, array){
+                array[index] = value.map(function(value){
+                    return value / sum;
+                });
+            });
+            return matrix;
+        })(s, k);
+
+        var width = imageData.width,
+            height = imageData.height,
+            data = imageData.data,
+            copy = Array.prototype.slice.call(data, 0);
+
+        for (var y = 0; y < height; ++y) {
+            for (var x = 0; x < width; ++x) {
+                var r = 0, g = 0, b = 0, a = 0;
+                for (var j = 1 - k; j < k; ++j) {
+                    if (y + j < 0 || y + j >= height) continue;
+                    for (var i = 1 - k; i < k; ++i) {
+                        if (x + i < 0 || x + i >= width) continue;
+                        r += data[4 * ((y + j) * width + (x + i)) + 0] * kernal[Math.abs(j)][Math.abs(i)];
+                        g += data[4 * ((y + j) * width + (x + i)) + 1] * kernal[Math.abs(j)][Math.abs(i)];
+                        b += data[4 * ((y + j) * width + (x + i)) + 2] * kernal[Math.abs(j)][Math.abs(i)];
+                        a += data[4 * ((y + j) * width + (x + i)) + 3] * kernal[Math.abs(j)][Math.abs(i)];
+                    }
+                }
+                data[4 * (y * width + x) + 0] = r;
+                data[4 * (y * width + x) + 1] = g;
+                data[4 * (y * width + x) + 2] = b;
+                data[4 * (y * width + x) + 3] = a;
+            }
+        }
+        return imageData;
+    }
+
     //画圆
     function drawCircle(pos, radius, color) {
         ctx.fillStyle = color;
@@ -228,6 +287,9 @@
     //图像处理
     document.querySelector("#ConvertToGrey").addEventListener("click", function(e){
         ctx.putImageData(convertToGrey(image.imageData), 0, 0);
+    }, false);
+    document.querySelector("#gaussian").addEventListener("click", function(e){
+        ctx.putImageData(gaussian(1, 1, image.imageData), 0, 0);
     }, false);
 }());
 </script>
