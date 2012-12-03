@@ -9,10 +9,12 @@
     </style>
 </head>
 <body>
-<canvas id="Js_canvas"></canvas>
+<canvas id="Js_canvas">Sorry！你的浏览器落伍了</canvas>
 <input type="file" accept="image/*" id="Js_file">
 <button id="ConvertToGrey">灰度</button>
-<button id="gaussian">高斯模糊</button>
+<input type="button" id="gaussian" value="高斯模糊">
+<input type="button" id="negative" value="底片">
+<input type="button" id="reset" value="重置">
 <script src="js/Kanvas.js"></script>
 <script>
 (function(){
@@ -22,8 +24,13 @@
         width: stageWidth,
         height: stageHeight
     });
-    var ctx = canvas.getContext("2d");
-    var reader = new FileReader();
+    try {
+        var ctx = canvas.getContext("2d");
+        var reader = new FileReader();
+    } catch (e) {
+        alert("Sorry！你的浏览器落伍了！");
+        return false;
+    }
     var file, pos, timeStart, timeStamp;
     var image = {
         imgObj: null, //图片对象
@@ -32,6 +39,7 @@
         movable: false,
         deltaPos: {}, //鼠标按下处与图片位置相对坐标
         velocity: {x: 0, y: 0},
+        originData: null
     };
 
     function loadImg(file, pos) {
@@ -53,6 +61,7 @@
                     w = w > stageWidth - position.x ? stageWidth - position.x : w;
                     h = h > stageHeight - position.y ? stageHeight - position.y : h;
                     image.imageData = ctx.getImageData(position.x, position.y, w, h);
+                    image.originData = copyData(image.imageData.data);
                     image.imagePos = {x: position.x, y: position.y};
                 };
                 image.imgObj.src = reader.result;
@@ -63,7 +72,6 @@
         }
 
     }
-
 
     function move() {
         if (image.velocity.x === 0 && image.velocity.y === 0) {
@@ -98,6 +106,10 @@
         frame = Kanvas.requestAnimationFrame.call(window, move);
     }
 
+    //报错
+    function error(e) {
+        alert(e + ":" + "\n请先插入图片");
+    }
     // 限制图片尺寸
     function adjustSize(width, height, limitWidth, limitHeight) {
         var aspectRatio = width / height;
@@ -136,6 +148,14 @@
         }
         return new Date().getTime() - timeStart;
     }
+    //deep copy imageData
+    function copyData(data) {
+        var length = data.length;
+        var newData = new Uint8ClampedArray(length);
+
+        newData.set(data, 0);
+        return newData;
+    }
     //分解
     function getPixelData(imageData) {
         var data = imageData.data,
@@ -167,22 +187,15 @@
         }
         return imageData;
     }
-    //二值化
-    function binarize(imageData) {
-        var data = imageData.data,
-            length = data.length;
-        for (var i = 0; i < length; i = i + 4) {
-
-        }
-        return imageData;
-    }
-
     /**
      * 高斯模糊
      * @param s sigama方差
      * @param k 矩阵维数2k+1
+     * @param imageData
      */
     function gaussian(s, k, imageData) {
+        var s = +s,
+            k = +k;
         //高斯卷积核
         var kernal = (function(s,k){
             var sigama = s,
@@ -209,31 +222,55 @@
 
         var width = imageData.width,
             height = imageData.height,
-            data = imageData.data,
-            copy = Array.prototype.slice.call(data, 0);
+            data = imageData.data;
 
+        console.time("useKernel");
         for (var y = 0; y < height; ++y) {
             for (var x = 0; x < width; ++x) {
-                var r = 0, g = 0, b = 0, a = 0;
-                for (var j = 1 - k; j < k; ++j) {
+                var r = 0, g = 0, b = 0, a = 0, sum = 0;
+                for (var j = - k; j <= k; j++) {
                     if (y + j < 0 || y + j >= height) continue;
-                    for (var i = 1 - k; i < k; ++i) {
+                    for (var i = - k; i <= k; i++) {
                         if (x + i < 0 || x + i >= width) continue;
-                        r += data[4 * ((y + j) * width + (x + i)) + 0] * kernal[Math.abs(j)][Math.abs(i)];
-                        g += data[4 * ((y + j) * width + (x + i)) + 1] * kernal[Math.abs(j)][Math.abs(i)];
-                        b += data[4 * ((y + j) * width + (x + i)) + 2] * kernal[Math.abs(j)][Math.abs(i)];
-                        a += data[4 * ((y + j) * width + (x + i)) + 3] * kernal[Math.abs(j)][Math.abs(i)];
+                        r += data[4 * ((y + j) * width + (x + i)) + 0] * kernal[j + k][i + k];
+                        g += data[4 * ((y + j) * width + (x + i)) + 1] * kernal[j + k][i + k];
+                        b += data[4 * ((y + j) * width + (x + i)) + 2] * kernal[j + k][i + k];
+                        a += data[4 * ((y + j) * width + (x + i)) + 3] * kernal[j + k][i + k];
+                        sum += kernal[j + k][i + k];
                     }
                 }
-                data[4 * (y * width + x) + 0] = r;
-                data[4 * (y * width + x) + 1] = g;
-                data[4 * (y * width + x) + 2] = b;
-                data[4 * (y * width + x) + 3] = a;
+                data[4 * (y * width + x) + 0] = r / sum;
+                data[4 * (y * width + x) + 1] = g / sum;
+                data[4 * (y * width + x) + 2] = b / sum;
+                data[4 * (y * width + x) + 3] = a / sum;
             }
         }
+        console.timeEnd("useKernel");
         return imageData;
     }
+    //底片
+    function negative(imgData) {
+        var iData = imgData,
+            data = iData.data,
+            width = iData.width,
+            height = iData.height;
 
+        for (var y = 0; y < height; y ++) {
+            for (var x = 0; x < width; x ++) {
+                data[4 * (y * width + x) + 0] = 255 - data[4 * (y * width + x) + 0];
+                data[4 * (y * width + x) + 1] = 255 - data[4 * (y * width + x) + 1];
+                data[4 * (y * width + x) + 2] = 255 - data[4 * (y * width + x) + 2];
+            }
+        }
+
+        return iData;
+    }
+    //重置
+    function reset(imgData) {
+        var iData = imgData;
+        iData.data.set(image.originData);
+        return iData;
+    }
     //画圆
     function drawCircle(pos, radius, color) {
         ctx.fillStyle = color;
@@ -286,10 +323,32 @@
     }, false);
     //图像处理
     document.querySelector("#ConvertToGrey").addEventListener("click", function(e){
-        ctx.putImageData(convertToGrey(image.imageData), 0, 0);
+        try {
+            ctx.putImageData(convertToGrey(image.imageData), image.imagePos.x, image.imagePos.y);
+        } catch (e) {
+            error(e);
+        }
     }, false);
     document.querySelector("#gaussian").addEventListener("click", function(e){
-        ctx.putImageData(gaussian(1, 1, image.imageData), 0, 0);
+        try {
+            ctx.putImageData(gaussian(1, 1, image.imageData), image.imagePos.x, image.imagePos.y);
+        } catch (e) {
+            error(e);
+        }
+    }, false);
+    document.querySelector("#negative").addEventListener("click", function(e){
+        try {
+            ctx.putImageData(negative(image.imageData), image.imagePos.x, image.imagePos.y);
+        } catch (e) {
+            error(e);
+        }
+    }, false);
+    document.querySelector("#reset").addEventListener("click", function(e){
+        try {
+            ctx.putImageData(reset(image.imageData), image.imagePos.x, image.imagePos.y);
+        } catch (e) {
+            error(e);
+        }
     }, false);
 }());
 </script>

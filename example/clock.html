@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>clock</title>
+    <link rel="stylesheet" href="css/normalize.css">
+</head>
+<body>
+<canvas id="Js_canvas"></canvas>
+<script src="js/Kanvas.js"></script>
+<script>
+(function(){
+    var width = 300,
+        height = 300,
+        canvas = Kanvas.getCanvas("#Js_canvas", {width: width, height: width}),
+        ctx = canvas.getContext("2d");
+
+    function Clock() {
+        this.center = {x: width / 2, y: height / 2};
+        this.radius = width / 3;
+
+        this.init = function() {
+            var angle, delta = this.radius * 3 / 4;
+
+            ctx.beginPath();
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 1;
+
+            ctx.arc(this.center.x, this.center.y, this.radius, 0, Math.PI * 2, false);
+            ctx.stroke();
+
+            ctx.moveTo(this.center.x, this.center - this.radius);
+            for (var i = 0; i < 12; i ++) {
+                angle = Math.PI * i / 6;
+                ctx.moveTo(this.center.x + this.radius * Math.sin(angle), this.center.y - this.radius * Math.cos(angle));
+                ctx.lineTo(this.center.x + delta * Math.sin(angle), this.center.y - delta * Math.cos(angle));
+                ctx.stroke();
+            }
+        }
+    }
+
+    var clock = new Clock();
+    clock.init();
+}());
+</script>
+</body>
+</html>
