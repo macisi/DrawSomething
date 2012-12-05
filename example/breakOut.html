@@ -1,0 +1,152 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title>Break out</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <style>
+        body { margin: 0; background-color: #000;}
+    </style>
+</head>
+<body>
+<canvas id="Js_canvas">Sorry!你的浏览器路落伍了！</canvas>
+<script src="js/Kanvas.js"></script>
+<script>
+(function(){
+    var K3D = Kanvas._3D;
+    var width = window.innerWidth;
+    var height = window.innerHeight - 5;
+    var canvas = Kanvas.getCanvas("#Js_canvas", {width: width, height: height});
+    var ctx = canvas.getContext("2d");
+
+    var Sun = function() {
+        this.pos = {
+            alpha: 0,
+            theta: 0,
+            radius: 0
+        };
+        this.lights = [];
+
+        var _this = this;
+
+        K3D.setVanishPoint(width / 2, height / 2);
+
+        this.emit = function() {
+            var alpha = Math.PI * 2 * Math.random(),
+                theta = Math.PI * 2 * Math.random();
+
+            var light = new Light(alpha, theta);
+            light.draw();
+            _this.lights.push(light);
+        };
+
+        this.init = function() {
+            setInterval(this.emit, 50);
+        };
+    };
+
+    var Light = function(alpha, theta) {
+        var r = ~~(Math.random() * 255 + 0.5),
+            g = ~~(Math.random() * 255 + 0.5),
+            b = ~~(Math.random() * 255 + 0.5);
+
+        this.color = [r, g, b].join(",");
+        this.len = 1;
+        this.pos = {
+            alpha: alpha,
+            theta: theta,
+            radius: 0
+        };
+        this.growing = true;
+        this.speed = 0.5;
+
+
+        function calulatePos(pos, len) {
+            var cartesian0 = K3D.spherical(pos.alpha, pos.theta, pos.radius);
+            var cartesian1 = K3D.spherical(pos.alpha, pos.theta, pos.radius + len);
+
+            var p0 = K3D.projection(cartesian0.x, cartesian0.y, cartesian0.z);
+            var p1 = K3D.projection(cartesian1.x, cartesian1.y, cartesian1.z);
+
+            return [p0, p1];
+        }
+
+        this.draw = function(){
+            var pos = calulatePos(this.pos, this.len),
+                a = this.len / 40,
+                rgba = [this.color, a].join(",");
+            ctx.strokeStyle = "rgba(" + rgba + ")";
+            ctx.beginPath();
+            ctx.moveTo(pos[0].x, pos[0].y);
+            ctx.lineTo(pos[1].x, pos[1].y);
+            ctx.stroke();
+            ctx.closePath();
+            if (this.growing && this.len < 40) {
+                this.len += .5;
+            } else if(this.growing && this.len >= 40) {
+                this.growing = false;
+            } else {
+                this.len -= .1;
+            }
+            this.pos.radius += this.speed;
+        }
+    }
+
+
+    var sun = new Sun();
+    sun.init();
+
+    function frame() {
+        ctx.clearRect(0, 0, width, height);
+        sun.lights.forEach(function(obj, index, array){
+            if (obj.len <= 0) {
+                obj = null;
+                array.splice(index, 1);
+            } else {
+                obj.draw();
+            }
+        });
+        Kanvas.requestAnimationFrame.call(window, frame);
+    }
+    frame();
+
+    canvas.onmousedown = function(e){
+        var x = e.clientX,
+            y = e.clientY,
+            rotateAngle;
+        document.onmousemove = function(e){
+            rotateAngle = K3D.getRotateAngle();
+            rotateAngle.y += (x - e.clientX) * Math.PI / 100;
+            rotateAngle.x += (y - e.clientY) * Math.PI / 100;
+            K3D.setRotateAngle({rotateXAngle: rotateAngle.x, rotateYAngle: rotateAngle.y});
+            x = e.clientX;
+            y = e.clientY;
+        };
+        document.onmouseup = function(){
+            document.onmousemove = null;
+        }
+    }
+
+    var wheelType = "mousewheel";
+    try{
+        document.createEvent("MouseScrollEvents")
+        wheelType = "DOMMouseScroll"
+    } catch(e){};
+    canvas.addEventListener(wheelType, function(event){
+        if ("wheelDelta" in event){//统一为±120，其中正数表示为向上滚动，负数表示向下滚动
+            var delta = event.wheelDelta
+            //opera 9x系列的滚动方向与IE保持一致，10后修正
+            if( window.opera && opera.version() < 10 )
+                delta = - delta;
+            //由于事件对象的原有属性是只读，我们只能通过添加一个私有属性delta来解决兼容问题
+            event.delta = Math.round(delta) / 120; //修正safari的浮点 bug
+        } else if( "detail" in event ){
+            event.wheelDelta = -event.detail * 40//为FF添加更大众化的wheelDelta
+            event.delta = event.wheelDelta /120  //添加私有的delta
+        }
+        K3D.setCenterPoint(0, 0, K3D.getCenterPoint().z + event.delta * 10);
+    }, false);
+}());
+</script>
+</body>
+</html>

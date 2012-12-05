@@ -1,3 +1,9 @@
+/**
+ * Kanvas
+ * 自建canvas库
+ * @author macisi528@gmail.com
+ */
+
 var Kanvas = Kanvas || {};
 Kanvas = (function(w){
     var Global = w,
@@ -60,32 +66,60 @@ Kanvas = (function(w){
         };
     }
 
-    var _3D = {
-        rotateXAngle: 0,
-        rotateYAngle: 0,
-        rotateZAngle: 0,
-        rotateRAngle: Math.PI / 8,
-        rotateX: function(x, y, z, a) {
+
+
+
+
+    var _3D = (function(){
+        var centerPoint = {
+            x: 0,
+            y: 0,
+            z: 0
+        };
+        var vanishPoint = {
+            x: 0,
+            y: 0
+        };
+
+        var rotateXAngle = 0,
+            rotateYAngle = 0,
+            rotateZAngle = 0,
+            rotateRAngle = Math.PI / 8,
+            focalLength = 250;
+
+        function _setRotateAngle(angles) {
+            rotateXAngle = angles.rotateXAngle ? angles.rotateXAngle : rotateXAngle;
+            rotateYAngle = angles.rotateYAngle ? angles.rotateYAngle : rotateYAngle;
+            rotateZAngle = angles.rotateZAngle ? angles.rotateZAngle : rotateZAngle;
+            rotateRAngle = angles.rotateRAngle ? angles.rotateRAngle : rotateRAngle;
+        }
+        function _getRotateAngle() {
             return {
-                x: x,
-                y: y * Math.cos(a) - z * Math.sin(a),
-                z: y * Math.sin(a) + z * Math.cos(a)
+                x: rotateXAngle,
+                y: rotateYAngle,
+                z: rotateZAngle,
+                r: rotateRAngle
             }
-        },
-        rotateY: function(x, y, z, a) {
-            return {
-                x: x * Math.cos(a) + z * Math.sin(a),
-                y: y,
-                z: z * Math.cos(a) - x * Math.sin(a)
-            };
-        },
-        rotateZ: function(x, y, z, a) {
-            return {
-                x: x * Math.cos(a) - y * Math.sin(a),
-                y: x * Math.sin(a) + y * Math.cos(a),
-                z: z
-            };
-        },
+        }
+        // 设定旋转中心
+        function _setVanishPoint(x, y) {
+            vanishPoint.x = x;
+            vanishPoint.y = y;
+        }
+        // 获取旋转中心
+        function _getVanishPoint(x, y) {
+            return vanishPoint;
+        }
+        //设定坐标中心点
+        function _setCenterPoint(x, y, z) {
+            centerPoint.x = x;
+            centerPoint.y = y;
+            centerPoint.z = z;
+        }
+        //获取坐标中心点
+        function _getCenterPoint() {
+            return centerPoint;
+        }
         /**
          * 球面坐标系转直角坐标系
          * @param a 仰角
@@ -93,13 +127,13 @@ Kanvas = (function(w){
          * @param r 半径
          * @return {Object}
          */
-        spherical: function(a, b, r) {
+        function _spherical(a, b, r) {
             return {
-                x: r * Math.sin(a) * Math.cos(b + this.rotateRAngle),
-                y: r * Math.sin(a) * Math.sin(b + this.rotateRAngle),
+                x: r * Math.sin(a) * Math.cos(b + rotateRAngle),
+                y: r * Math.sin(a) * Math.sin(b + rotateRAngle),
                 z: r * Math.cos(a)
             }
-        },
+        };
         /**
          * 投影到2d坐标
          * @param x
@@ -107,19 +141,59 @@ Kanvas = (function(w){
          * @param z
          * @return {Object}
          */
-        projection: function(x, y, z) {
-            var c1 = this.rotateX(x, y, z, this.rotateXAngle);
-            var c2 = this.rotateY(c1.x, c1.y, c1.z, this.rotateYAngle);
-            var c3 = this.rotateZ(c2.x, c2.y, c2.z, this.rotateZAngle);
+        function _projection(x, y, z) {
+            var c1 = rotateX(x, y, z, rotateXAngle);
+            var c2 = rotateY(c1.x, c1.y, c1.z, rotateYAngle);
+            var c3 = rotateZ(c2.x, c2.y, c2.z, rotateZAngle);
+            var scale = focalLength / (focalLength + c3.z + centerPoint.z);
 
-            //平行投影至XOY平面
-            //return {x: c3.x, y: c3.y};
-
-            //透视投影至XOY平面，观察点(0, 0, 1000)
-            var h = 1 - c3.z / 1000;
-            return {x: c3.x / h , y: c3.y / h};
+            return {
+                x: vanishPoint.x + (centerPoint.x + c3.x) * scale,
+                y: vanishPoint.y + (centerPoint.y + c3.y) * scale
+            };
         }
-    };
+
+        function rotateX(x, y, z, a) {
+            var sina = Math.sin(a),
+                cosa = Math.cos(a);
+            return {
+                x: x,
+                y: y * cosa - z * sina,
+                z: y * sina + z * cosa
+            }
+        }
+
+        function rotateY(x, y, z, a) {
+            var sina = Math.sin(a),
+                cosa = Math.cos(a);
+            return {
+                x: x * cosa + z * sina,
+                y: y,
+                z: z * cosa - x * sina
+            };
+        }
+
+        function rotateZ(x, y, z, a) {
+            var sina = Math.sin(a),
+                cosa = Math.cos(a);
+            return {
+                x: x * cosa - y * sina,
+                y: x * sina + y * cosa,
+                z: z
+            };
+        }
+
+        return {
+            getRotateAngle: _getRotateAngle,
+            setRotateAngle: _setRotateAngle,
+            getVanishPoint: _getVanishPoint,
+            setVanishPoint: _setVanishPoint,
+            getCenterPoint: _getCenterPoint,
+            setCenterPoint: _setCenterPoint,
+            spherical: _spherical,
+            projection: _projection
+        };
+    })();
 
     return {
         getCanvas: getCanvas,
