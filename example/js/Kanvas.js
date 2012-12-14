@@ -1,3 +1,43 @@
+/* Simple JavaScript Inheritance
+ * By John Resig http://ejohn.org/
+ * MIT Licensed.
+ */
+(function(){
+    var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
+    this.Class = function(){};
+
+    Class.extend = function(prop) {
+        var _super = this.prototype;
+
+        initializing = true;
+        var prototype = new this();
+        initializing = false;
+
+        for (var name in prop) {
+            prototype[name] = typeof prop[name] == "function" &&
+                typeof _super[name] == "function" && fnTest.test(prop[name]) ?
+                (function(name, fn){
+                    return function() {
+                        var tmp = this._super;
+                        this._super = _super[name];
+                        var ret = fn.apply(this, arguments);
+                        this._super = tmp;
+                        return ret;
+                    };
+                })(name, prop[name]) :
+                prop[name];
+        }
+
+        function Class() {
+            if ( !initializing && this.init )
+                this.init.apply(this, arguments);
+        }
+        Class.prototype = prototype;
+        Class.prototype.constructor = Class;
+        Class.extend = arguments.callee;
+        return Class;
+    };
+})();
 /**
  * Kanvas
  * 自建canvas库
@@ -15,7 +55,7 @@ Kanvas = (function(w){
      * @param size 设置canvas尺寸 {width: w, height: h}, 可选
      * @return {*|CanvasRenderingContext2D}
      */
-    function getCanvas(el, size) {
+    function _getCanvas(el, size) {
         var canvas = typeof el === "string" ? doc.querySelector(el) : el,
             context;
         if (size) {
@@ -56,7 +96,7 @@ Kanvas = (function(w){
      * @param evt
      * @return {Object}
      */
-    function getMousePos(canvas, evt) {
+    function _getMousePos(canvas, evt) {
         var rect = canvas.getBoundingClientRect();
         var mouseX = evt.clientX - rect.left;
         var mouseY = evt.clientY - rect.top;
@@ -191,53 +231,75 @@ Kanvas = (function(w){
         };
     })();
 
+    var _vector = (function(){
+        var _Point = Class.extend({
+            init: function(x, y){
+                this.x = x;
+                this.y = y;
+            },
+            getPos: function(){
+
+            }
+        });
+
+        var _Line = _Point.extend({
+            init: function(x, y){
+                if (x instanceof _Point && y instanceof _Point) {
+                    this.x = x.x - y.x;
+                    this.y = x.y - y.y;
+                } else {
+                    this.x = x;
+                    this.y = y;
+                }
+            },
+            /**
+             * 取模
+             * @return {Number}
+             */
+            getModulo : function(){
+                return Math.sqrt(this.x * this.x + this.y * this.y);
+            }
+        });
+
+        /**
+         * 返回两个向量的数量积
+         * @param line1
+         * @param line2
+         * @return {number}
+         */
+        function _getScalarProduct(line1, line2){
+            return line1.x * line2.x + line1.y * line2.y;
+        }
+
+        /**
+         * 返回向量夹角cos值
+         * @param line1
+         * @param line2
+         * @return {Number}
+         */
+        function _getAngle(line1, line2) {
+            return _getScalarProduct(line1, line2) / (line1.getModulo() * line2.getModulo());
+        }
+
+
+
+
+
+        return {
+            Point: _Point,
+            Line: _Line,
+            getScalarProduct: _getScalarProduct,
+            getAngle: _getAngle
+        }
+    })();
+
     return {
-        getCanvas: getCanvas,
+        getCanvas: _getCanvas,
         requestAnimationFrame: getAnimationFrame,
         cancelAnimationFrame: cancelAnimationFrame,
-        getMousePosition: getMousePos,
-        _3D: _3D
+        getMousePosition: _getMousePos,
+        _3D: _3D,
+        vector: _vector
     }
 
 }(window));
-
-/* Simple JavaScript Inheritance
- * By John Resig http://ejohn.org/
- * MIT Licensed.
- */
-(function(){
-    var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
-    this.Class = function(){};
-
-    Class.extend = function(prop) {
-        var _super = this.prototype;
-
-        initializing = true;
-        var prototype = new this();
-        initializing = false;
-
-        for (var name in prop) {
-            prototype[name] = typeof prop[name] == "function" &&
-                typeof _super[name] == "function" && fnTest.test(prop[name]) ?
-                (function(name, fn){
-                    return function() {
-                        var tmp = this._super;
-                        this._super = _super[name];
-                        var ret = fn.apply(this, arguments);
-                        this._super = tmp;
-                        return ret;
-                    };
-                })(name, prop[name]) :
-                prop[name];
-        }
-
-        function Class() {
-            if ( !initializing && this.init )
-                this.init.apply(this, arguments);
-        }
-        Class.prototype = prototype;
-        Class.prototype.constructor = Class;
-        Class.extend = arguments.callee;
-        return Class;
-    };
-})();

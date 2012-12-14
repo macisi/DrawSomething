@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>vector</title>
+    <link rel="stylesheet" href="css/normalize.css">
+</head>
+<body>
+<canvas id="Js_canvas">Sorry!你的浏览器落伍了！</canvas>
+<script src="js/Kanvas.js"></script>
+<script>
+(function(){
+    var KV = Kanvas.vector;
+    var width = window.innerWidth - 15;
+    var height = window.innerHeight - 25;
+    var canvas = Kanvas.getCanvas("#Js_canvas", {width: width, height: height});
+    var ctx = canvas.getContext("2d");
+
+    var pointA = new KV.Point(100, 100);
+    var pointB = new KV.Point(250, 200);
+
+    var lineAB = new KV.Line(pointA, pointB);
+    console.log(lineAB.getModulo());
+
+}());
+</script>
+</body>
+</html>
