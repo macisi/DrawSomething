@@ -236,31 +236,48 @@ Kanvas = (function(w){
             init: function(x, y){
                 this.x = x;
                 this.y = y;
+                this.activity = false;
+                this.dragable = false;
             },
-            getPos: function(){
-
+            show: function(context){
+                if (this.activity) {
+                    context.beginPath();
+                    context.moveTo(this.x, this.y);
+                    context.arc(this.x, this.y, 2, 0 , Math.PI * 2, false);
+                    context.stroke();
+                }
             }
         });
 
         var _Line = _Point.extend({
-            init: function(x, y){
-                if (x instanceof _Point && y instanceof _Point) {
-                    this.x = x.x - y.x;
-                    this.y = x.y - y.y;
-                } else {
-                    this.x = x;
-                    this.y = y;
-                }
+            init: function(point1, point2){
+                this.start = point1;
+                this.end = point2;
+            },
+            draw: function(context){
+                context.beginPath();
+                context.moveTo(this.start.x, this.start.y);
+                context.lineTo(this.end.x, this.end.y);
+                context.stroke();
             },
             /**
              * 取模
              * @return {Number}
              */
             getModulo : function(){
-                return Math.sqrt(this.x * this.x + this.y * this.y);
+                return _getLength(this.start, this.end);
             }
         });
 
+        /**
+         * 返回两点之间距离
+         * @param point1
+         * @param point2
+         * @return {Number}
+         */
+        function _getLength(point1, point2){
+            return Math.sqrt((point2.x - point1.x) * (point2.x - point1.x) + (point2.y - point1.y) * (point2.y - point1.y));
+        }
         /**
          * 返回两个向量的数量积
          * @param line1
@@ -270,7 +287,6 @@ Kanvas = (function(w){
         function _getScalarProduct(line1, line2){
             return line1.x * line2.x + line1.y * line2.y;
         }
-
         /**
          * 返回向量夹角cos值
          * @param line1
@@ -289,7 +305,8 @@ Kanvas = (function(w){
             Point: _Point,
             Line: _Line,
             getScalarProduct: _getScalarProduct,
-            getAngle: _getAngle
+            getAngle: _getAngle,
+            getLength: _getLength
         }
     })();
 
