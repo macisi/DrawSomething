@@ -29,33 +29,71 @@
     var snowflakeUrl = "img/Snowflakes.png";
     var snowflakeCollect = [];
 
+    // particle movement parameters:
+    // we'll advance each particle vertically at least by this amount (think gravity and resistance)
+    var minVerticalVelocity = 1;
+    // we'll advance each particle vertically at most by this amount (think gravity and resistance)
+    var maxVerticalVelocity = 4;
+    // we'll shift each particle horizontally at least by this amound (think wind and resistance)
+    var minHorizontalVelocity = -1;
+    // we'll shift each particle horizontally at least by this amound (think wind and resistance)
+    var maxHorizontalVelocity = 3;
+    // each particle sprite will be scaled down maxScale / this (this < maxScale) at max
+    var minScale = 0.2;
+    // each particle sprite will be scaled down this / minScale (this > minScale) at max
+    var maxScale = 1.25;
+    // each particle also "bobs" on horizontal axis (think volumetric resistance) by this amount at least
+    var minHorizontalDelta = 2;
+    // each particle also "bobs" on horizontal axis (think volumetric resistance) by this amount at most
+    var maxHorizontalDelta = 3;
+    // each particle is at least this opaque
+    var minOpacity = 0.2;
+    // each particle is at least this opaque
+    var maxOpacity = 0.9;
+    // change opacity by at max 1/maxOpacityIncrement
+    var maxOpacityIncrement = 50;
+    var speedFactor = 1;
+    var spriteWidth = 20;
+    var spriteHeight = 20;
+
     function generateSnowflake() {
+        var scale = Math.random() * (maxScale - minScale) + minScale;
         return {
             type: Math.round(Math.random() * 4),
-            x: Math.round(width * Math.random()),
-            y: 0,
-            opacity: Math.random(),
-            scale: Math.random() * 20,
-            speedX: Math.round((Math.random() - .5) * 5),
-            speedY: Math.ceil(Math.random() + 1)
+            x: Math.random() * width,
+            y: Math.random() * height,
+            sw: scale * spriteWidth,
+            sh: scale * spriteHeight,
+            velocityX: Math.random() * (maxHorizontalVelocity - minHorizontalVelocity) + minHorizontalVelocity,
+            velocityY: Math.random() * (maxVerticalVelocity - minVerticalVelocity) + minVerticalVelocity,
+            mhd: Math.random() * (maxHorizontalDelta - minHorizontalDelta) + minHorizontalDelta,
+            hd: 0,
+            hdi: Math.random() / (maxHorizontalVelocity * minHorizontalDelta),
+            o: Math.random() * (maxOpacity - minOpacity) + minOpacity,
+            oi: Math.random() / maxOpacityIncrement
         }
     }
     snowflakeCollect.push(generateSnowflake());
 
     function updateSnowflake(status){
-        status.x = status.x + status.speedX;
-        status.y = status.y + status.speedY;
+        status.x = status.x + status.velocityX * speedFactor;
+        status.y = status.y + (status.velocityY + status.hd) * speedFactor;
+        status.hd += status.hdi;
+        if (status.hd < -status.mhd || status.hd > status.mhd) {
+            status.hdi = -status.hdi;
+        };
     }
 
     function drawSnowflake() {
         var img = new Image();
         img.onload = function(){
+            ctx.clearRect(0, 0, width, height);
             snowflakeCollect.forEach(function(obj, index, array){
                 updateSnowflake(obj);
                 if (obj.y > height + obj.scale || obj.x < -obj.scale || obj.x > width + obj.scale) {
                     array.splice(index, 1);
                 } else {
-                    ctx.drawImage(img, obj.type * 20, 0, 20, 20, obj.x, obj.y, obj.scale, obj.scale);
+                    ctx.drawImage(img, obj.type * 20, 0, 20, 20, obj.x, obj.y, obj.sw, obj.sh);
                 }
             });
         };
@@ -64,7 +102,6 @@
 
 
     function frame(){
-        ctx.clearRect(0, 0, width, height);
         drawSnowflake();
         if (snowflakeCollect.length < 100) {
             snowflakeCollect.push(generateSnowflake());
