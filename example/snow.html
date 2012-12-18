@@ -30,15 +30,14 @@
     var snowflakeCollect = [];
 
     function generateSnowflake() {
-        var random = Math.random();
         return {
-            type: Math.round(random * 4),
-            x: Math.round(width * random),
+            type: Math.round(Math.random() * 4),
+            x: Math.round(width * Math.random()),
             y: 0,
-            opacity: random,
-            scale: random * 20,
-            speedX: Math.round(3 * random),
-            speedY: Math.round(3 * random)
+            opacity: Math.random(),
+            scale: Math.random() * 20,
+            speedX: Math.round((Math.random() - .5) * 5),
+            speedY: Math.ceil(Math.random() + 1)
         }
     }
     snowflakeCollect.push(generateSnowflake());
@@ -48,28 +47,28 @@
         status.y = status.y + status.speedY;
     }
 
-
-    function drawSnowflake(status) {
+    function drawSnowflake() {
         var img = new Image();
         img.onload = function(){
-            ctx.drawImage(this, status.type * 20, 0, 20, 20, status.x, status.y, status.scale, status.scale);
-        }
+            snowflakeCollect.forEach(function(obj, index, array){
+                updateSnowflake(obj);
+                if (obj.y > height + obj.scale || obj.x < -obj.scale || obj.x > width + obj.scale) {
+                    array.splice(index, 1);
+                } else {
+                    ctx.drawImage(img, obj.type * 20, 0, 20, 20, obj.x, obj.y, obj.scale, obj.scale);
+                }
+            });
+        };
         img.src = snowflakeUrl;
-        snowflakeCollect.push(generateSnowflake());
-        if (snowflakeCollect.length < 10) {
-            snowflakeCollect.push(generateSnowflake());
-        }
     }
+
 
     function frame(){
         ctx.clearRect(0, 0, width, height);
-        snowflakeCollect.forEach(function(obj, index, array){
-            updateSnowflake(obj);
-            if (obj.y > height + obj.scale || obj.x < -obj.scale || obj.x > width + obj.scale) {
-                array.splice(index, 1);
-            }
-            drawSnowflake(obj);
-        });
+        drawSnowflake();
+        if (snowflakeCollect.length < 100) {
+            snowflakeCollect.push(generateSnowflake());
+        }
         K.requestAnimationFrame.call(window, frame);
     }
     frame();

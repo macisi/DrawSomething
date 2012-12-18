@@ -297,17 +297,13 @@ Kanvas = (function(w){
             return _getScalarProduct(line1, line2) / (line1.getModulo() * line2.getModulo());
         }
 
-
-
-
-
         return {
             Point: _Point,
             Line: _Line,
             getScalarProduct: _getScalarProduct,
             getAngle: _getAngle,
             getLength: _getLength
-        }
+        };
     })();
 
     return {
@@ -317,6 +313,6 @@ Kanvas = (function(w){
         getMousePosition: _getMousePos,
         _3D: _3D,
         vector: _vector
-    }
+    };
 
 }(window));
