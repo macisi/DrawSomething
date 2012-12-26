@@ -77,7 +77,7 @@ QP = (function(w){
                 isDefaultSize = this.eqString(size, _defSize) === -1 ? false : true,
                 domainSizefix, subDomain, rgxSubDomainFix, cusSize;
             domainSizefix = {
-                'o': 'b',
+                "opacity": 'b',
                 'b': 'b',
                 'c': 'b',
                 'm': 'b',

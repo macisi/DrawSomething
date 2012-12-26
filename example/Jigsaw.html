@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>演示</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <style type="text/css">
+        canvas { position: absolute; top: 0; left: 0;}
+    </style>
+</head>
+<body>
+<canvas id="Js_canvas"></canvas>
+<script src="js/Kanvas.js"></script>
+<script>
+(function(){
+    var K = Kanvas,
+        width = window.innerWidth,
+        height = window.innerHeight,
+        canvas = K.getCanvas("#Js_canvas", {
+            width: width,
+            height: height
+        }),
+        ctx = canvas.getContext("2d");
+
+    var imageDir = "img/Jigsaw/",
+        imageLength = 66,
+        imageArray = [],
+        imageTargetPos = [[261.5, 48.5], [63, 284], [204.5, 494.5], [335, 494.5], [498.5, 516], [775, 311.5], [582, 77], [335, 48], [269, 93.5], [205.5, 105.5], [109.5, 136.5], [53, 172], [90.5, 274.5], [74.5, 337.5], [51, 363.5], [119, 385.5], [162, 453], [103, 493], [296.5, 475.5], [358.5, 447], [432.5, 492.5], [494, 514], [538, 462], [643.5, 464], [708.5, 440.5], [746.5, 392], [760, 329.5], [795, 293.5], [772, 244.5], [801.5, 220.5], [785.5, 206], [707, 93.5], [652.5, 73], [582.5, 90], [530.5, 114], [427.5, 69.5], [489, 162], [422.5, 142.5], [336.5, 147.5], [260.5, 176.5], [178.5, 221], [99, 201.5], [185.5, 335], [221, 456], [260.5, 383.5], [361.5, 386], [396, 370], [432.5, 352], [490.5, 358.5], [557, 380], [635, 387.5], [707.5, 372.5], [701.5, 252.5], [758, 291], [719.5, 161.5], [663.5, 139.5], [278, 271], [345, 331], [565.5, 319], [635, 292], [658.5, 256.5], [581, 198], [339.5, 265], [378, 264.5], [419.5, 214], [488.5, 260]];
+        img = {};
+    for (var i = 0; i < imageLength; i++) {
+        img = {
+            src: imageDir + "m" + i + ".png",
+            targetPos : imageTargetPos[i]
+        };
+        imageArray.push(img);
+    }
+    for each
+
+})()
+
+</script>
+</body>
+</html>
