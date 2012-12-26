@@ -20,22 +20,65 @@
             width: width,
             height: height
         }),
-        ctx = canvas.getContext("2d");
+        ctx = canvas.getContext("2d"),
+        stageCenter = {
+            x: width / 2,
+            y: height / 2
+        };
+
+    function Fragment() {
+    }
+    Fragment.prototype = {
+        update: function(){
+            var deltX = this.target[0] > this.current[0] ? Math.ceil((this.target[0] - this.current[0]) / 10) : Math.floor((this.target[0] - this.current[0]) / 10),
+                deltY = this.target[1] > this.current[1] ? Math.ceil((this.target[1] - this.current[1]) / 10) : Math.floor((this.target[1] - this.current[1]) / 10);
+            this.current = [this.origin[0] + deltX, this.origin[1] + deltY];
+        }
+    };
 
     var imageDir = "img/Jigsaw/",
         imageLength = 66,
-        imageArray = [],
-        imageTargetPos = [[261.5, 48.5], [63, 284], [204.5, 494.5], [335, 494.5], [498.5, 516], [775, 311.5], [582, 77], [335, 48], [269, 93.5], [205.5, 105.5], [109.5, 136.5], [53, 172], [90.5, 274.5], [74.5, 337.5], [51, 363.5], [119, 385.5], [162, 453], [103, 493], [296.5, 475.5], [358.5, 447], [432.5, 492.5], [494, 514], [538, 462], [643.5, 464], [708.5, 440.5], [746.5, 392], [760, 329.5], [795, 293.5], [772, 244.5], [801.5, 220.5], [785.5, 206], [707, 93.5], [652.5, 73], [582.5, 90], [530.5, 114], [427.5, 69.5], [489, 162], [422.5, 142.5], [336.5, 147.5], [260.5, 176.5], [178.5, 221], [99, 201.5], [185.5, 335], [221, 456], [260.5, 383.5], [361.5, 386], [396, 370], [432.5, 352], [490.5, 358.5], [557, 380], [635, 387.5], [707.5, 372.5], [701.5, 252.5], [758, 291], [719.5, 161.5], [663.5, 139.5], [278, 271], [345, 331], [565.5, 319], [635, 292], [658.5, 256.5], [581, 198], [339.5, 265], [378, 264.5], [419.5, 214], [488.5, 260]];
-        img = {};
-    for (var i = 0; i < imageLength; i++) {
-        img = {
-            src: imageDir + "m" + i + ".png",
-            targetPos : imageTargetPos[i]
-        };
-        imageArray.push(img);
+        fragmentArray = [],
+        imageTarget = [[129,0], [0,104], [130,464], [294,480], [373,478], [691,139], [494,43], [286,16], [253,81], [175,82], [74,116], [34,142], [45,238], [64,328], [35,350], [59,319], [140,435], [92,484], [270,450], [316,413], [398,466], [476,502], [472,405], [618,446], [674,414], [728,374], [743,314], [772,264], [752,229], [792,211], [762,184.5], [688,79], [630,59], [543,67], [516,101], [389,34], [466,107], [395,120], [268,78], [229,141], [131,133], [74,182], [154,319], [175,409], [199,319], [351,377], [375,352], [396,256], [465,317], [532,360], [589,335], [683,350], [649,158], [746,279], [705,141], [606,98], [235,231], [307,295], [520,279], [622,279], [625,220], [512,121], [329,256], [344,238], [375,183], [456,235]],
+        temp = {};
+    for(var i = 0; i < imageLength; i++) {
+        temp = new Fragment();
+        temp.target = [imageTarget[i][0] / 2 + stageCenter.x / 2, imageTarget[i][1] / 2 + stageCenter.y / 2];
+        if (imageTarget[i][0] / 2 <= stageCenter.x / 2 && imageTarget[i][1] / 2 <= stageCenter.y / 2) {
+            temp.origin = [-temp.target[0], -temp.target[1]];
+        } else if (imageTarget[i][0] / 2 <= stageCenter.x / 2 && imageTarget[i][1] / 2 > stageCenter.y / 2) {
+            temp.origin = [-temp.target[0], temp.target[1] * 2 - height];
+        } else if (imageTarget[i][0] / 2 > stageCenter.x / 2 && imageTarget[i][1] / 2 <= stageCenter.y / 2) {
+            temp.origin = [temp.target[0] * 2 - width, -temp.target[1]];
+        } else {
+            temp.origin = [temp.target[0] * 2 - width, temp.target[1] * 2 - height];
+        }
+        temp.src = imageDir + "m" + (i + 1) + ".png";
+        temp.current = temp.origin;
+        fragmentArray.push(temp);
+        console.log(temp.origin);
     }
-    for each
 
+
+
+    function draw(image) {
+        var img = new Image();
+        img.onload = function(){
+            ctx.drawImage(this, image.current[0], image.current[1], img.width / 2, img.height / 2);
+        };
+        img.src = image.src;
+    }
+
+
+    function frame(){
+        ctx.clearRect(0, 0, width, height);
+        fragmentArray.forEach(function(obj){
+            obj.update();
+            draw(obj);
+        });
+        K.requestAnimationFrame.call(window, frame);
+    }
+    frame();
 })()
 
 </script>
