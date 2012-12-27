@@ -27,19 +27,19 @@
             x: width / 2,
             y: height / 2
         },
-        count = 0;
+        count;
 
     function Fragment() {
     }
     Fragment.prototype = {
         update: function(){
-            var deltY = this.target.y > this.current.y ? Math.ceil((this.target.y - this.current.y) / 100) : Math.floor((this.target.y - this.current.y) / 100),
+            var deltY = this.target.y > this.current.y ? Math.ceil((this.target.y - this.current.y) / 10) : Math.floor((this.target.y - this.current.y) / 10),
                 deltX = deltY / this.slope;
             this.current = {
                 x: this.current.x + deltX,
                 y: this.current.y + deltY
             };
-            this.opacity += (1 - this.opacity) / 100;
+            this.opacity += (1 - this.opacity) / 10;
         }
     };
 
@@ -105,7 +105,7 @@
     function frame(){
         ctx.clearRect(0, 0, width, height);
         fragmentArray.forEach(function(obj, index){
-            if (index * 10 < count) {
+            if (index * 5 < count) {
                 obj.update();
                 draw(obj);
             }
@@ -116,6 +116,8 @@
 
 
     document.querySelector("#J_start").addEventListener("click", function(){
+        count = 0;
+        ctx.clearRect(0, 0, width, height);
         frame();
     });
 })()
