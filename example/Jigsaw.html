@@ -105,7 +105,7 @@
     function frame(){
         ctx.clearRect(0, 0, width, height);
         fragmentArray.forEach(function(obj, index){
-            if (index < count) {
+            if (imageLength - index < count) {
                 obj.update();
                 draw(obj);
             }
