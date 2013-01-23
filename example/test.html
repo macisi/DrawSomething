@@ -68,13 +68,14 @@
             this.head = this.option.pos;
             this.end = this.option.pos;
             //方向
-            this.direction = this.option.direction;
-            if (this.direction.x === 0 && this.direction.y === 0) {
-                this.direction.x = 1;
-            }
+            this.direction = {};
+            this.direction.x = this.option.direction.x;
+            this.direction.y = this.direction.x === 0 ? (this.option.direction.y === 0 ? 1: this.option.direction.y) : 0;
             this.len = 0;
             //颜色
             this.color = this.option.color;
+            this.headColor = "rgba(" + this.color + ", 1)";
+            this.endColor = "rgba(" + this.color + ", 0)";
             //速度
             this.speed = this.option.speed;
             this.growth = this.option.growth;
@@ -82,19 +83,23 @@
             this.thickness = this.option.thickness;
             //颜色渐变
             this.gradient = ctx.createLinearGradient(this.head[0], this.head[1], this.end[0], this.end[1]);
-//            this.gradient.addColorStop(0, "rgba(" + this.color + ", 1)");
-//            this.gradient.addColorStop(1, "rgba(" + this.color + ", 0)");
         },
         update: function(){
             this.head = [this.head[0] + this.growth * this.direction.x, this.head[1] + this.growth * this.direction.y];
             this.end = [this.end[0] + this.speed * this.direction.x, this.end[1] + this.speed * this.direction.y];
             this.gradient = ctx.createLinearGradient(this.head[0], this.head[1], this.end[0], this.end[1]);
-            this.gradient.addColorStop(0, "rgba(" + this.color + ", 1)");
-            this.gradient.addColorStop(1, "rgba(" + this.color + ", 0)");
+            this.gradient.addColorStop(0, this.headColor);
+            this.gradient.addColorStop(1, this.endColor);
         },
         destroy: function(){
-            if (this.head[0] < 0 && this.end[0] < 0 || this.head[0] > width && this.end[0] > width || this.head[1] < 0 && this.end[1] < 0 || this.head[1] > height && this.end[1] > height) {
-                return true;
+            if (this.direction.y === 0) {
+                if (this.head[0] < 0 && this.end[0] < 0 || this.head[0] > width && this.end[0] > width) {
+                    return true;
+                }
+            } else {
+                if (this.head[1] < 0 && this.end[1] < 0 || this.head[1] > height && this.end[1] > height) {
+                    return true;
+                }
             }
             return false;
         },
@@ -111,13 +116,28 @@
 
     var pulses = [];
 
-    canvas.addEventListener("click", function(e){
+    canvas.addEventListener("mousedown", function(e){
+        canvas.timeStamp = e.timeStamp;
+    }, false);
+    canvas.addEventListener("mouseup", function(e){
         var pos = K.getMousePosition(canvas, e),
-            thick = Math.random() * (MinThickness - MaxThickness) + MaxThickness;
-        pulses.push(new Pulse({pos: [pos.x, pos.y], color: color[0], thickness: thick, direction: {x: -1, y: 0}}));
-        pulses.push(new Pulse({pos: [pos.x, pos.y], color: color[1], thickness: thick, direction: {x: 0, y: 1}}));
-        pulses.push(new Pulse({pos: [pos.x, pos.y], color: color[2], thickness: thick, direction: {x: 1, y: 0}}));
-        pulses.push(new Pulse({pos: [pos.x, pos.y], color: color[3], thickness: thick, direction: {x: 0, y: -1}}));
+            thick = Math.round((e.timeStamp - canvas.timeStamp) / 10),
+            type = [],
+            i = color.length,
+            num = Math.round(Math.random() * 3);
+        while(i > 0) {
+            type.push(num);
+            if (num === color.length - 1) {
+                num = 0;
+            } else {
+                num ++;
+            }
+            i--;
+        }
+        pulses.push(new Pulse({pos: [pos.x, pos.y], color: color[type[0]], thickness: thick, direction: {x: -1, y: 0}}));
+        pulses.push(new Pulse({pos: [pos.x, pos.y], color: color[type[1]], thickness: thick, direction: {x: 0, y: -1}}));
+        pulses.push(new Pulse({pos: [pos.x, pos.y], color: color[type[2]], thickness: thick, direction: {x: 1, y: 0}}));
+        pulses.push(new Pulse({pos: [pos.x, pos.y], color: color[type[3]], thickness: thick, direction: {x: 0, y: 1}}));
     }, false);
 
     function render(){
