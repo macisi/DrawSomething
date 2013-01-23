@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>test</title>
+<link rel="stylesheet" href="css/normalize.css">
+<style type="text/css">
+    canvas { position: absolute; top: 0; left: 0; background-color: #000;}
+</style>
+</head>
+<body>
+<canvas id="Js_canvas"></canvas>
+<script src="js/Kanvas.js"></script>
+<script>
+(function(){
+    var K = Kanvas,
+        size = getWinSize(),
+        width = size.width,
+        height = size.height,
+        canvas = K.getCanvas("#Js_canvas", size),
+        ctx = canvas.getContext("2d");
+
+    //获取窗口尺寸
+    function getWinSize() {
+        return {
+            width: window.innerWidth,
+            height: window.innerHeight
+        };
+    }
+    //窗口resize时修改canvas尺寸
+    function setSize(e){
+        size = getWinSize();
+        width = size.width;
+        height = size.height;
+        K.setSize(canvas, size);
+    }
+    window.addEventListener("resize", setSize, false);
+
+    /**
+     * main part
+     */
+    var color = ["255, 0 , 0", "0, 255, 0", "0, 0, 255", "255, 255, 0"];
+    var MaxThickness = 10;
+    var MinThickness = 5;
+
+    function Pulse(option){
+        this.option = {
+            pos: [width / 2, height / 2],
+            direction : {
+                x: Math.round(Math.random() * 2) - 1,
+                y: Math.round(Math.random() * 2) - 1
+            },
+            color: color[Math.round(Math.random() * 3)],
+            speed: 2,
+            growth: 5,
+            thickness: Math.random() * (MinThickness - MaxThickness) + MaxThickness
+        };
+        if (option) {
+            for (var prop in option) {
+                this.option[prop] = option[prop];
+            }
+        }
+        this.init();
+    }
+
+    Pulse.prototype = {
+        init: function(){
+            //初始位置
+            this.head = this.option.pos;
+            this.end = this.option.pos;
+            //方向
+            this.direction = this.option.direction;
+            if (this.direction.x === 0 && this.direction.y === 0) {
+                this.direction.x = 1;
+            }
+            this.len = 0;
+            //颜色
+            this.color = this.option.color;
+            //速度
+            this.speed = this.option.speed;
+            this.growth = this.option.growth;
+            //粗细
+            this.thickness = this.option.thickness;
+            //颜色渐变
+            this.gradient = ctx.createLinearGradient(this.head[0], this.head[1], this.end[0], this.end[1]);
+//            this.gradient.addColorStop(0, "rgba(" + this.color + ", 1)");
+//            this.gradient.addColorStop(1, "rgba(" + this.color + ", 0)");
+        },
+        update: function(){
+            this.head = [this.head[0] + this.growth * this.direction.x, this.head[1] + this.growth * this.direction.y];
+            this.end = [this.end[0] + this.speed * this.direction.x, this.end[1] + this.speed * this.direction.y];
+            this.gradient = ctx.createLinearGradient(this.head[0], this.head[1], this.end[0], this.end[1]);
+            this.gradient.addColorStop(0, "rgba(" + this.color + ", 1)");
+            this.gradient.addColorStop(1, "rgba(" + this.color + ", 0)");
+        },
+        destroy: function(){
+            if (this.head[0] < 0 && this.end[0] < 0 || this.head[0] > width && this.end[0] > width || this.head[1] < 0 && this.end[1] < 0 || this.head[1] > height && this.end[1] > height) {
+                return true;
+            }
+            return false;
+        },
+        draw: function(){
+            this.update();
+            ctx.beginPath();
+            ctx.lineWidth = this.thickness;
+            ctx.strokeStyle = this.gradient;
+            ctx.moveTo(this.end[0], this.end[1]);
+            ctx.lineTo(this.head[0], this.head[1]);
+            ctx.stroke();
+        }
+    };
+
+    var pulses = [];
+
+    canvas.addEventListener("click", function(e){
+        var pos = K.getMousePosition(canvas, e),
+            thick = Math.random() * (MinThickness - MaxThickness) + MaxThickness;
+        pulses.push(new Pulse({pos: [pos.x, pos.y], color: color[0], thickness: thick, direction: {x: -1, y: 0}}));
+        pulses.push(new Pulse({pos: [pos.x, pos.y], color: color[1], thickness: thick, direction: {x: 0, y: 1}}));
+        pulses.push(new Pulse({pos: [pos.x, pos.y], color: color[2], thickness: thick, direction: {x: 1, y: 0}}));
+        pulses.push(new Pulse({pos: [pos.x, pos.y], color: color[3], thickness: thick, direction: {x: 0, y: -1}}));
+    }, false);
+
+    function render(){
+        ctx.clearRect(0, 0, width, height);
+        pulses.forEach(function(pulse, i){
+            if (pulse.destroy()) {
+                pulses.splice(i, 1);
+            } else {
+                pulse.draw();
+            }
+        });
+    }
+
+    function frame(){
+        render();
+        K.requestAnimationFrame.call(window, frame);
+    }
+    frame();
+}())
+</script>
+</body>
+</html>

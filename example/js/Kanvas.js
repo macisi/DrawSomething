@@ -65,6 +65,18 @@ Kanvas = (function(w){
         return canvas;
     }
 
+    /**
+     * 设置canvas尺寸
+     * @param canvas
+     * @param size
+     * @return {*}
+     */
+    function _setSize(canvas, size) {
+        canvas.width = size.width;
+        canvas.height = size.height;
+        return canvas;
+    }
+
     var getAnimationFrame,
         cancelAnimationFrame;
     (function() {
@@ -308,6 +320,7 @@ Kanvas = (function(w){
 
     return {
         getCanvas: _getCanvas,
+        setSize: _setSize,
         requestAnimationFrame: getAnimationFrame,
         cancelAnimationFrame: cancelAnimationFrame,
         getMousePosition: _getMousePos,
