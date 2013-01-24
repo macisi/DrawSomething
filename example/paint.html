@@ -1,0 +1,50 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Draw Something</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/main.css">
+    <script src="js/vendor/underscore.js"></script>
+    <script src="js/vendor/kinetic-v4.0.4.js"></script>
+    <!--<script src="js/vendor/zepto.min.js"></script>-->
+</head>
+<body>
+<script type="text/template" id="Js_header_tpl">
+<h1>Draw Something</h1>
+<h2>Hello: <%= name %></h2>
+</script>
+<header id="Js_header"></header>
+<div id="Js_canvas" class="canvas"></div>
+<div class="tools">
+    <div id="Js_palette" class="palette">
+
+    </div>
+    <ul id="Js_shape" class="shape">
+        <li><a data-shape="line">Line</a></li>
+        <li><a data-shape="rect">Rect</a></li>
+        <li><a data-shape="circle">Circle</a></li>
+        <li><a data-shape="eraser">Eraser</a></li>
+    </ul>
+    <div id="Js_color" class="color">
+        <div class="foreground"></div>
+        <div class="background"></div>
+    </div>
+    <label for="Js_strokeWidth">画笔粗细<input type="range" id="Js_strokeWidth" min="1" max="100" value="1"></label>
+    <label for="Js_cleanCanvas">
+        <button id="Js_cleanCanvas">清空画布</button>
+    </label>
+    <label for="Js_cleanData">
+        <button id="Js_cleanData">清空本地储存</button>
+    </label>
+</div>
+<script src="js/main.js"></script>
+<script>
+//页面模版处理
+var userInfo = {};
+//userInfo.name = prompt("你妈贵姓");
+Draw.render("Js_header", userInfo);
+Draw.init();
+</script>
+</body>
+</html>

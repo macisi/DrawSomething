@@ -64,13 +64,13 @@
         temp = new Fragment();
         temp.target = targetPos[i];
         if (targetPos[i].x <= stageCenter.x && targetPos[i].y <= stageCenter.y) {
-            temp.origin = {x: -temp.target.x, y: -temp.target.y};
+            temp.head = {x: -temp.target.x, y: -temp.target.y};
         } else if (targetPos[i].x <= stageCenter.x && targetPos[i].y > stageCenter.y) {
-            temp.origin = {x: -temp.target.x, y: height * 2 - temp.target.y};
+            temp.head = {x: -temp.target.x, y: height * 2 - temp.target.y};
         } else if (targetPos[i].x > stageCenter.x && targetPos[i].y <= stageCenter.y) {
-            temp.origin = {x: width * 2 - temp.target.x, y: -temp.target.y};
+            temp.head = {x: width * 2 - temp.target.x, y: -temp.target.y};
         } else {
-            temp.origin = {x: width * 2 - temp.target.x, y: height * 2 - temp.target.y};
+            temp.head = {x: width * 2 - temp.target.x, y: height * 2 - temp.target.y};
         }
         temp.src = imageDir + "m" + (i + 1) + ".png";
         temp.spirit = (function(){
@@ -89,8 +89,8 @@
             img.src = temp.src;
             return fragCanvas;
         })();
-        temp.current = temp.origin;
-        temp.slope = Math.round((temp.target.y - temp.origin.y) / (temp.target.x - temp.origin.x) * 1000) / 1000;
+        temp.current = temp.head;
+        temp.slope = Math.round((temp.target.y - temp.head.y) / (temp.target.x - temp.head.x) * 1000) / 1000;
         temp.opacity = 0;
         fragmentArray.push(temp);
     }

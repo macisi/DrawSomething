@@ -88,17 +88,17 @@ function Datum(){
 }
 
 function Line(){
-    this.origin = {
+    this.head = {
         x: stageWidth / 2,
         y: stageHeight / 2
     };
     this.positive = 0;
-    this.pLastPos = this.origin;
-    this.pNextPos = this.origin;
+    this.pLastPos = this.head;
+    this.pNextPos = this.head;
 
     this.negative = 0;
-    this.nLastPos = this.origin;
-    this.nNextPos = this.origin;
+    this.nLastPos = this.head;
+    this.nNextPos = this.head;
 
     this.amplitude = document.getElementById("amplitude").max / 2;
     this.cycle = document.getElementById("cycle").max / 2;
@@ -115,8 +115,8 @@ function Line(){
     };
     this.reset = function(){
         this.positive = this.negative = 0;
-        this.pLastPos = this.origin;
-        this.nLastPos = this.origin;
+        this.pLastPos = this.head;
+        this.nLastPos = this.head;
         canvas.width = canvas.width;
         drawAxis();
     }
@@ -169,9 +169,9 @@ document.getElementById("accuracy").addEventListener("change", function(e){
 me.addEventListener("mousemove", function(e){
     abscissa = getMousePos(me, e).x;
     abscissa = abscissa > line.nLastPos.x && abscissa < line.pLastPos.x ? abscissa : -1;
-    ordinate = abscissa !== - 1 ? - line.amplitude * Math.sin((abscissa - line.origin.x) * Math.PI * 2 / line.cycle) + line.origin.y : -1;
+    ordinate = abscissa !== - 1 ? - line.amplitude * Math.sin((abscissa - line.head.x) * Math.PI * 2 / line.cycle) + line.head.y : -1;
     if (abscissa !== -1) {
-       osd.setPos(abscissa - line.origin.x, line.origin.y - ordinate);
+       osd.setPos(abscissa - line.head.x, line.head.y - ordinate);
     }
     datum.setPos(abscissa, ordinate);
 }, false);
@@ -182,12 +182,12 @@ drawAxis();
 function updateSence(){
     if (line.positive <= stageWidth * 7 / 16 ) {
         line.pNextPos = {
-            x: line.positive + line.origin.x,
-            y: - line.amplitude * Math.sin(line.positive * Math.PI * 2 / line.cycle) + line.origin.y
+            x: line.positive + line.head.x,
+            y: - line.amplitude * Math.sin(line.positive * Math.PI * 2 / line.cycle) + line.head.y
         };
         line.nNextPos = {
-            x: line.negative + line.origin.x,
-            y: - line.amplitude * Math.sin(line.negative * Math.PI * 2 / line.cycle) + line.origin.y
+            x: line.negative + line.head.x,
+            y: - line.amplitude * Math.sin(line.negative * Math.PI * 2 / line.cycle) + line.head.y
         };
         line.draw();
 
