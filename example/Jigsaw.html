@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>演示</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <style type="text/css">
+        canvas { position: absolute; top: 0; left: 0; z-index: -1;}
+        .start { z-index: 0;}
+    </style>
+</head>
+<body>
+<canvas id="Js_canvas"></canvas>
+<button id="J_start" class="start">开始</button>
+<script src="js/Kanvas.js"></script>
+<script>
+(function(){
+    var K = Kanvas,
+        width = window.innerWidth,
+        height = window.innerHeight,
+        canvas = K.getCanvas("#Js_canvas", {
+            width: width,
+            height: height
+        }),
+        ctx = canvas.getContext("2d"),
+        stageCenter = {
+            x: width / 2,
+            y: height / 2
+        },
+        count;
+
+    function Fragment() {
+    }
+    Fragment.prototype = {
+        update: function(){
+            var deltY = this.target.y > this.current.y ? Math.ceil((this.target.y - this.current.y) / 10) : Math.floor((this.target.y - this.current.y) / 10),
+                deltX = deltY / this.slope;
+            this.current = {
+                x: this.current.x + deltX,
+                y: this.current.y + deltY
+            };
+            this.opacity += (1 - this.opacity) / 10;
+        }
+    };
+
+    var imageDir = "img/Jigsaw/",
+        imageLength = 66,
+        fragmentArray = [],
+        imageWidth = 860,
+        imageHeight = 554,
+        imageDelta = {
+            x: stageCenter.x - imageWidth / 4,
+            y: stageCenter.y - imageHeight / 4
+        },
+        spiritPos = [[129,0], [0,104], [130,464], [294,480], [373,478], [691,139], [494,43], [286,16], [253,81], [175,82], [74,116], [34,142], [45,238], [64,328], [35,350], [59,319], [140,435], [184,484], [270,450], [316,413], [398,466], [476,502], [472,405], [618,446], [674,414], [728,374], [743,314], [772,264], [752,229], [792,211], [762,164], [688,79], [630,59], [543,67], [516,101], [389,34], [466,107], [395,120], [268,78], [229,141], [131,133], [74,182], [154,319], [175,409], [199,319], [351,377], [375,352], [396,256], [465,317], [532,360], [589,335], [683,350], [649,158], [746,279], [705,141], [606,98], [235,231], [307,295], [520,279], [622,279], [625,220], [512,121], [329,256], [344,238], [375,183], [456,235]],
+        targetPos = spiritPos.map(function(i){
+            return {
+                x: i[0] / 2 + imageDelta.x,
+                y: i[1] / 2 + imageDelta.y
+            }
+        }),
+        temp = {};
+    for(var i = 0; i < imageLength; i++) {
+        temp = new Fragment();
+        temp.target = targetPos[i];
+        if (targetPos[i].x <= stageCenter.x && targetPos[i].y <= stageCenter.y) {
+            temp.head = {x: -temp.target.x, y: -temp.target.y};
+        } else if (targetPos[i].x <= stageCenter.x && targetPos[i].y > stageCenter.y) {
+            temp.head = {x: -temp.target.x, y: height * 2 - temp.target.y};
+        } else if (targetPos[i].x > stageCenter.x && targetPos[i].y <= stageCenter.y) {
+            temp.head = {x: width * 2 - temp.target.x, y: -temp.target.y};
+        } else {
+            temp.head = {x: width * 2 - temp.target.x, y: height * 2 - temp.target.y};
+        }
+        temp.src = imageDir + "m" + (i + 1) + ".png";
+        temp.spirit = (function(){
+            var fragCanvas = document.createElement("canvas"),
+                   fragCtx = fragCanvas.getContext("2d"),
+                       img = new Image(),
+                 fragWidth,
+                fragHeight;
+            img.onload = function(){
+                fragWidth = img.width / 2;
+                fragHeight = img.height / 2;
+                fragCanvas.width = fragWidth;
+                fragCanvas.height = fragHeight;
+                fragCtx.drawImage(this, 0, 0, fragWidth, fragHeight);
+            };
+            img.src = temp.src;
+            return fragCanvas;
+        })();
+        temp.current = temp.head;
+        temp.slope = Math.round((temp.target.y - temp.head.y) / (temp.target.x - temp.head.x) * 1000) / 1000;
+        temp.opacity = 0;
+        fragmentArray.push(temp);
+    }
+
+    function draw(image) {
+        ctx.save();
+        ctx.globalAlpha = image.opacity;
+        ctx.drawImage(image.spirit, image.current.x, image.current.y);
+        ctx.restore();
+    }
+
+    function frame(){
+        ctx.clearRect(0, 0, width, height);
+        fragmentArray.forEach(function(obj, index){
+            if (imageLength - index < count) {
+                obj.update();
+                draw(obj);
+            }
+        });
+        count ++;
+        K.requestAnimationFrame.call(window, frame);
+    }
+
+
+    document.querySelector("#J_start").addEventListener("click", function(){
+        count = 0;
+        ctx.clearRect(0, 0, width, height);
+        frame();
+    });
+})()
+
+</script>
+</body>
+</html>

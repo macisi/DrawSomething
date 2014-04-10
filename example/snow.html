@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>snow</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <style type="text/css">
+    canvas { position: absolute; top: 0; left: 0; background-color: #81d0e9;}
+    </style>
+</head>
+<body>
+<h1>h1</h1>
+<h2>h2</h2>
+<h3>h3</h3>
+<button>button</button>
+<canvas id="Js_canvas"></canvas>
+<script src="js/Kanvas.js"></script>
+<script>
+(function(){
+    var K = Kanvas,
+        width = window.innerWidth,
+        height = window.innerHeight,
+        canvas = K.getCanvas("#Js_canvas", {
+            width: width,
+            height: height
+        }),
+        ctx = canvas.getContext("2d");
+
+    var snowflakeUrl = "img/Snowflakes.png";
+    var snowflakeImageWidth = 20;
+    var snowflakeImageHeight = 20;
+    var snowflakeCollect = [];
+    // 雪花数量
+    var maxSnowflakeNumber = 2000;
+
+    // 雪花运动参数:
+    // 垂直方向最小速度
+    var minVerticalVelocity = 1;
+    // 垂直方向最大速度
+    var maxVerticalVelocity = 4;
+    // 水平最小速度
+    var minHorizontalVelocity = -1;
+    // 水平最大速度
+    var maxHorizontalVelocity = 3;
+    // 最小的雪花尺寸比例
+    var minScale = 0.2;
+    // 最大的雪花尺寸比例
+    var maxScale = 1.25;
+    // 水平最小偏移量
+    var minHorizontalDelta = 2;
+    // 水平最大偏移量
+    var maxHorizontalDelta = 3;
+    // 最小透明度
+    var minOpacity = 0.2;
+    // 最大透明度
+    var maxOpacity = 0.9;
+    // 透明度变化量
+    var maxOpacityIncrement = 50;
+    // 速度因子
+    var speedFactor = 1;
+    // 雪花初始宽度
+    var spriteWidth = 20;
+    // 雪花初始高度
+    var spriteHeight = 20;
+
+    function generateSnowflake() {
+        if (snowflakeCollect.length < maxSnowflakeNumber) {
+            snowflakeCollect.push(new Snowflake());
+            generateSnowflake();
+        }
+    }
+
+    function Snowflake() {
+        this.init();
+    }
+    Snowflake.prototype = {
+        init: function(){
+            var scale = Math.random() * (maxScale - minScale) + minScale;
+            this.type = Math.round(Math.random() * 4);
+            this.x = Math.random() * width;
+            this.y = Math.random() * height;
+            this.snowWidth = scale * spriteWidth;
+            this.snowHeight = scale * spriteHeight;
+            this.velocityX = Math.random() * (maxHorizontalVelocity - minHorizontalVelocity) + minHorizontalVelocity;
+            this.velocityY = Math.random() * (maxVerticalVelocity - minVerticalVelocity) + minVerticalVelocity;
+            this.maxDeltaRange = Math.random() * (maxHorizontalDelta - minHorizontalDelta) + minHorizontalDelta;
+            this.horizontalDelta = 0;
+            this.hdIncrease = Math.random() / (maxHorizontalVelocity * minHorizontalDelta);
+            this.opacity = Math.random() * (maxOpacity - minOpacity) + minOpacity;
+            this.opacityIncrease = Math.random() / maxOpacityIncrement;
+        },
+        update: function(){
+            this.x += this.velocityX * speedFactor;
+            this.y += (this.velocityY + this.horizontalDelta) * speedFactor;
+            this.horizontalDelta += this.hdIncrease;
+            if (this.horizontalDelta < -this.maxDeltaRange || this.horizontalDelta > this.maxDeltaRange) {
+                this.hdIncrease = -this.hdIncrease;
+            }
+
+            this.opacity += this.opacityIncrease;
+            if (this.opacity > maxOpacity || this.opacity < minOpacity) {
+                this.opacityIncrease = -this.opacityIncrease
+            }
+            if (this.opacity > maxOpacity) this.opacity = maxOpacity;
+            if (this.opacity < minOpacity) this.opacity = minOpacity;
+        },
+        draw: function(img){
+            ctx.globalAlpha = this.opacity;
+            ctx.drawImage(img, this.type * snowflakeImageWidth, 0, snowflakeImageWidth, snowflakeImageHeight, this.x, this.y, this.snowWidth, this.snowHeight);
+        }
+    };
+
+    function drawStage() {
+        var img = new Image();
+        img.onload = function(){
+            ctx.clearRect(0, 0, width, height);
+            snowflakeCollect.forEach(function(obj, index, array){
+                obj.update();
+                if (obj.y > height + obj.snowHeight) {
+                    array.splice(index, 1);
+                } else {
+                    obj.draw(img);
+                }
+            });
+        };
+        img.src = snowflakeUrl;
+    }
+
+    window.addEventListener("resize", function(e){
+        canvas.width = width =  window.innerWidth;
+        canvas.height = height = window.innerHeight;
+    }, false);
+
+    function frame(){
+        drawStage();
+        generateSnowflake();
+        K.requestAnimationFrame.call(window, frame);
+    }
+    frame();
+})();
+</script>
+</body>
+</html>
