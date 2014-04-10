@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+<meta charset="UTF-8">
+<title>game demo</title>
+<style>
+#stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: #fff;
+}
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<script>
+(function(){
+    'use strict';
+
+    var stage = document.getElementById('stage');
+    var ctx = stage.getContext('2d');
+    var W = window.innerWidth;
+    var H = window.innerHeight;
+    var Obstacles = [];
+    var ObstacleConfig = {
+        maxSize: 50,
+        minSize: 10,
+        maxSpeed: 20,
+        minSpeed: 10,
+        generationRate: 1000
+    };
+
+    stage.width = W;
+    stage.height = H;
+
+    /*
+     * get range between the giving value;
+     */
+    function getRange(min, max){
+        return min + (max - min) * Math.round(Math.random() * 10) / 10;
+    }
+    /*
+     * collide detection
+     */
+    function collideDetect(obj1, obj2){
+        var isCollide = false;
+        var c1 = {x: obj1.x + obj1.w / 2, y: obj1.y + obj1.h / 2};
+        var c2 = {x: obj2.x + obj2.w / 2, y: obj2.y + obj2.h / 2};
+        if (Math.abs(c1.x - c2.x) < (obj1.w + obj2.w) / 2 && Math.abs(c1.y - c2.y) < (obj1.h + obj2.h) / 2) {
+            isCollide = true;
+            console.log("Boom!");
+        }
+        return isCollide;
+    }
+
+    window.addEventListener("mousemove", function(e){
+        //console.log(e.x, e.y);
+        character.move({
+            x: e.x,
+            y: e.y
+        });
+    }, false);
+
+    //主角
+    var character = (function(){
+        var _c = {
+            x: 0,
+            y: 0,
+            w: 50,
+            h: 50,
+            _draw: function(){
+                //console.log(this.y);
+                ctx.fillRect(this.x, this.y, this.w, this.h);
+            },
+            /*
+             * update character
+             */
+            update: function(){
+                this._draw();
+            },
+            /*
+             * calculate the position according to the mouse move
+             */
+            move: function(mousePos){
+                this.y = mousePos.y;
+                //this.x = mousePos.x;
+                //avoid the bottom edge exceed the window
+                if (this.y + this.h > H) {
+                    this.y = H - this.h;
+                }
+            }
+        };
+
+        return _c;
+
+    }());
+
+    //throw('stop');
+
+    //障碍物
+    function Obstacle(){
+        this.create();
+    };
+    Obstacle.prototype = {
+        constructor: Obstacle,
+        create: function(){
+            //todo: make random param
+            this.w = getRange(ObstacleConfig.minSize, ObstacleConfig.maxSize);
+            this.h = getRange(ObstacleConfig.minSize, ObstacleConfig.maxSize);
+            this.x = W - this.w;
+            this.y = H * Math.round(Math.random() * 10) / 10;
+            this.speed = getRange(ObstacleConfig.minSpeed, ObstacleConfig.maxSpeed);
+
+            //add obstacle to the collection;
+            Obstacles.push(this);
+        },
+        move: function(){
+            this.x -= this.speed;
+            if (this.x + this.w <= 0) {
+                this.destroy();
+            } else {
+                this.update();
+            }
+        },
+        update: function(){
+            ctx.fillRect(this.x, this.y, this.w, this.h);
+        },
+        /*
+         * destory self, remove from Obstacles
+         */
+        destroy: function(){
+            var index = Obstacles.indexOf(this);
+            if (index !== -1) {
+                Obstacles.splice(index, 1);
+            }
+        }
+    };
+
+    setInterval(function(){
+        new Obstacle();
+    }, ObstacleConfig.generationRate);
+
+    function update(){
+        ctx.clearRect(0, 0, W, H);
+        character.update();
+        //console.log(Obstacles.length);
+        Obstacles.forEach(function(os){
+            os.move();
+            collideDetect(os, character);
+        });
+        window.requestAnimationFrame(update);
+    }
+    update();
+
+}())
+</script>
+</body>
+</html>

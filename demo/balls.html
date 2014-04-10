@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Balls</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #333;
+        }
+
+        #canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+(function (d) {
+    window.onload = function () {
+        var canvas = d.getElementById("canvas"),
+                ctx = canvas.getContext("2d");
+        var W = canvas.width = window.innerWidth;
+        var H = canvas.height = window.innerHeight;
+        var Gravity = 9.8E-1;
+
+        window.onresize = function () {
+            canvas.width = W = window.innerWidth;
+            canvas.height = H = window.innerHeight;
+        };
+        console.log(ctx);
+        var Ball = function (position, radius) {
+            this.initialize(position, radius);
+        };
+        Ball.prototype = {
+            constructor: Ball,
+            initialize: function (position, radius) {
+                this.x = position.x;
+                this.y = position.y;
+                this.radius = radius;
+                this.weight = 4 / 3 * Math.PI * Math.pow(this.radius, 3);
+                this.ax = 0;
+                this.ay = Gravity;
+                this.vx = 0;
+                this.vy = 0;
+                this.color = ["rgba(" + Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255), ".4)"].join(",");
+            },
+            update: function () {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.y + this.radius > H) {
+                    this.y = H - this.radius;
+                    this.vy = -this.vy;
+                }
+                if (this.x + this.radius > W) {
+                    this.x = W - this.radius;
+                    this.vx = -this.vx;
+                }
+                if (this.y - this.radius < 0) {
+                    this.y = this.radius;
+                    this.vy = -this.vy;
+                }
+                if (this.x - this.radius < 0) {
+                    this.x = this.radius;
+                    this.vx = -this.vx;
+                }
+                this.vx += this.ax;
+                this.vy += this.ay;
+                this.draw();
+            },
+            draw: function () {
+                ctx.moveTo(this.x, this.y);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fillStyle = this.color;
+                ctx.strokeStyle = this.color;
+                ctx.fill();
+                ctx.stroke();
+            }
+        };
+
+        canvas.addEventListener("click", function (e) {
+            balls.push(new Ball({x: e.x, y: e.y}, 20));
+        });
+
+        var balls = [];
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            balls.forEach(function (ball) {
+                ball.update();
+            });
+            window.webkitRequestAnimationFrame(draw);
+        }
+
+        draw();
+    };
+})(document);
+</script>
+</body>
+</html>
